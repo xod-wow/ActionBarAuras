@@ -97,7 +97,7 @@ local function InitializeOverlay(f, color)
     -- the color to change depending on auraData.dispelName.
     f.auraBorder = f:CreateTexture(nil, "ARTWORK")
     f.auraBorder:SetBlendMode("ADD")
-    f.auraBorder:SetTexture([[Interface\Addons\_LiteLite\textures\Overlay]])
+    f.auraBorder:SetTexture([[Interface\Addons\ActionBarAuras\Textures\Overlay]])
     f.auraBorder:SetVertexColor(color:GetRGBA())
     f.auraBorder:SetAllPoints(true)
 
