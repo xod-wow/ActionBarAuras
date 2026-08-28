@@ -1,0 +1,13 @@
+## Interface: 120100
+## Title: ActionBarAuras
+## IconTexture: Interface\Icons\ability_deathknight_heartstopaura
+## Version: @project-version@
+## Author: Xodiv-Nagrand
+## Email: mib@post.com
+## SavedVariables: ActionBarAurasDB
+## X-Curse-Project-ID: 
+
+embeds.xml
+
+Options.lua
+Core.lua
