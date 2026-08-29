@@ -9,5 +9,7 @@
 
 embeds.xml
 
+Overlay.xml
+
 Options.lua
 Core.lua

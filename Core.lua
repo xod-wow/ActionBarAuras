@@ -92,29 +92,21 @@ AuraColorCurve:AddPoint(0.0, CreateColor(1, 0.5, 0.5))
 AuraColorCurve:AddPoint(3.0, CreateColor(1, 1, 0.5))
 AuraColorCurve:AddPoint(10.0, CreateColor(1, 1, 1))
 
-local function InitializeOverlay(f, color)
+local durationTextOptions = {
+    textFormatter = AuraDurationFormatter,
+    textColor = {
+        curve = AuraColorCurve,
+        property = Enum.DurationTextBindingProperty.RemainingDuration
+    }
+}
+
+local function InitializeOverlay(f, cf)
     -- AuraButton is not managing the border, it's fixed, since we don't need
     -- the color to change depending on auraData.dispelName.
-    f.auraBorder = f:CreateTexture(nil, "ARTWORK")
-    f.auraBorder:SetBlendMode("ADD")
-    f.auraBorder:SetTexture([[Interface\Addons\ActionBarAuras\Textures\Overlay]])
-    f.auraBorder:SetVertexColor(color:GetRGBA())
-    f.auraBorder:SetAllPoints(true)
+    f.auraBorder:SetVertexColor(cf.color:GetRGBA())
 
-    f.durationText = f:CreateFontString(nil, "OVERLAY", "NumberFontNormal")
-    f.durationText:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", 3, 3)
-
-    local durationTextOptions = {
-        textFormatter = AuraDurationFormatter,
-        textColor = {
-            curve = AuraColorCurve,
-            property = Enum.DurationTextBindingProperty.RemainingDuration
-        }
-    }
     f:SetDurationText(f.durationText, durationTextOptions)
 
-    f.stacksText = f:CreateFontString(nil, "OVERLAY", "NumberFontNormal")
-    f.stacksText:SetPoint("TOPLEFT", f, "TOPLEFT", 3, -3)
     f:SetApplicationCount(f.stacksText)
 
     f:EnableMouse(false)
@@ -122,9 +114,32 @@ end
 
 --[[--------------------------------------------------------------------------]]--
 
-local AuraContainers = {
-    { filter = "HELPFUL", unit = 'player', color = CreateColor(0, 0.7, 0, 0.5) },
-    { filter = "HARMFUL", unit = 'target', color = CreateColor(1, 0, 0, 0.5) },
+AuraContainers = {
+    {
+        filter = 'HELPFUL',
+        unit = 'player',
+        color = CreateColor(0, 0.7, 0, 0.5),
+        templateNames = { 'ABAOverlayAuraTemplate' },
+        candidateFilters = { isHelpful = true },
+        initializeFrame = InitializeOverlay,
+    },
+    {
+        filter = 'HARMFUL',
+        unit = 'target',
+        color = CreateColor(1, 0, 0, 0.5),
+        templateNames = { 'ABAOverlayAuraTemplate' },
+        candidateFilters = { isHarmful = true },
+        initializeFrame = InitializeOverlay,
+    }
+--[[
+    {
+        filter = 'HELPFUL',
+        unit = 'target',
+        color = CreateColor(1, 0, 0, 0.5),
+        templateNames = { 'ABAOverlayStealableTemplate' },
+        candidateFilters = { isStealable = true },
+    }
+]]
 }
 
 local function CreateAuraSlotsForButton(button)
@@ -133,7 +148,8 @@ local function CreateAuraSlotsForButton(button)
         local options = {
             sortMethod = AuraContainerSortMethod.ExpirationOnly,
             sortDirection = AuraContainerSortDirection.Reverse,
-            initializeFrame = function (f) InitializeOverlay(f, cf.color) end
+            templateNames = cf.templateNames,
+            initializeFrame = cf.initializeFrame and function (f) cf.initializeFrame(f, cf) end
         }
         local auraSlotFilter = cf.filter .. '|PLAYER'
         local as = cf.container:AddAuraSlot(name, auraSlotFilter, options)
@@ -202,7 +218,7 @@ local function ApplyAuraSlotScales(ignoreRestrictions)
     end
 end
 
-local function GetActionFilters(actionID)
+local function GetActionCandidateFilters(actionID)
     local actionType, id, actionSubType = GetActionInfo(actionID)
     local filters = {
         isFromPlayerOrPlayerPet = true,
@@ -233,17 +249,25 @@ local function GetActionFilters(actionID)
     return filters
 end
 
+-- Because the AuraSlots can't be reparented they don't get their shown state
+-- managed by their associated ActionButton, and will appear in seemingly
+-- random spots for hidden ActionButtons. As a fairly bad work-around for this
+-- we set their action to 0 which ends up with a blank includeSpellIDs which
+-- matches nothing and never shows.
+--
+-- The other way to do this is to create one AuraContainer per AuraSlot, since
+-- the AuraContainers can be reparented to the button. This also solves the
+-- scale problem, but the cost is having over a thousand AuraContainer and
+-- I don't know how well this scales.
+
 local function UpdateOverlayFilters()
     for b in EnumerateActionButtons() do
         local name = b:GetName()
+        local action = b:IsVisible() and b.action or 0
         for _, cf in ipairs(AuraContainers) do
-            local filters = GetActionFilters(b.action, cf.filter)
-            if cf.filter == 'HARMFUL' then
-                filters.isHarmful = true
-            elseif cf.filter == 'HELPFUL' then
-                filters.isHelpful = true
-            end
-            cf.container:SetAuraSlotCandidateFilters(name, filters)
+            local candidateFilters = GetActionCandidateFilters(action, cf.filter)
+            Mixin(candidateFilters, cf.candidateFilters)
+            cf.container:SetAuraSlotCandidateFilters(name, candidateFilters)
         end
     end
 end

@@ -1,0 +1,38 @@
+<Ui>
+
+    <Button name="ABAOverlayAuraTemplate" virtual="true">
+        <Layers>
+            <Layer level="ARTWORK">
+                <Texture parentKey="auraBorder" setAllPoints="true" alphaMode="ADD" file="Interface\AddOns\ActionBarAuras\Textures\Overlay" />
+            </Layer>
+            <Layer level="OVERLAY">
+                <FontString parentKey="durationText" inherits="NumberFontNormal">
+                    <Anchors>
+                        <Anchor point="BOTTOMLEFT" x="3" y="3" />
+                    </Anchors>
+                </FontString>
+                <FontString parentKey="stacksText" inherits="NumberFontNormal">
+                    <Anchors>
+                        <Anchor point="TOPLEFT" x="3" y="-3" />
+                    </Anchors>
+                </FontString>
+            </Layer>
+        </Layers>
+    </Button>
+
+    <Button name="ABAOverlayStealableTemplate" virtual="true">
+        <Layers>
+            <Layer level="ARTWORK">
+                <Texture parentKey="ProcLoopFlipbook" atlas="UI-HUD-ActionBar-Proc-Loop-Flipbook" hidden="true">
+                    <Anchors> <Anchor point="CENTER" /> </Anchors>
+                </Texture>
+            </Layer>
+        </Layers>
+        <Animations>
+            <AnimationGroup parentKey="ProcLoop" looping="REPEAT">
+                <FlipBook parentKey="FlipAnim" childKey="ProcLoopFlipbook" duration="1" order="0" flipBookRows="6" flipBookColumns="5" flipBookFrames="30" flipBookFrameWidth="0" flipBookFrameHeight="0" />
+            </AnimationGroup>
+        </Animations>
+    </Button>
+
+</Ui>
