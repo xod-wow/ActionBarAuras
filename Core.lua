@@ -114,22 +114,31 @@ end
 
 --[[--------------------------------------------------------------------------]]--
 
-AuraContainers = {
+local AuraContainers = {
     {
         filter = 'HELPFUL',
         unit = 'player',
         color = CreateColor(0, 0.7, 0, 0.5),
         templateNames = { 'ABAOverlayAuraTemplate' },
-        candidateFilters = { isHelpful = true },
         initializeFrame = InitializeOverlay,
+        addFilters =
+            function (t, cf, actionID)
+                t.isHelpful = true
+            end,
     },
     {
         filter = 'HARMFUL',
         unit = 'target',
         color = CreateColor(1, 0, 0, 0.5),
         templateNames = { 'ABAOverlayAuraTemplate' },
-        candidateFilters = { isHarmful = true },
         initializeFrame = InitializeOverlay,
+        addFilters =
+            function (t, cf, actionID)
+                t.isHarmful = true
+                if UnitCanAssist('player', 'target', true, true) then
+                    t.maxDuration = 0
+                end
+            end,
     }
 --[[
     {
@@ -137,7 +146,13 @@ AuraContainers = {
         unit = 'target',
         color = CreateColor(1, 0, 0, 0.5),
         templateNames = { 'ABAOverlayStealableTemplate' },
-        candidateFilters = { isStealable = true },
+        addFilters =
+            function (t, cf, actionID)
+                t.isHarmful = true
+                if not IsPurgeAction(actionID) then
+                    t.maxDuration = 0
+                end
+            end,
     }
 ]]
 }
@@ -266,7 +281,7 @@ local function UpdateOverlayFilters()
         local action = b:IsVisible() and b.action or 0
         for _, cf in ipairs(AuraContainers) do
             local candidateFilters = GetActionCandidateFilters(action, cf.filter)
-            Mixin(candidateFilters, cf.candidateFilters)
+            cf.addFilters(candidateFilters, cf, action)
             cf.container:SetAuraSlotCandidateFilters(name, candidateFilters)
         end
     end

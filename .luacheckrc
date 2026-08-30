@@ -45,4 +45,5 @@ read_globals =  {
     'NUM_ACTIONBAR_BUTTONS',
     'PixelUtil',
     'UIParent',
+    'UnitCanAssist',
 }
