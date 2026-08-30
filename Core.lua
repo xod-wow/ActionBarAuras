@@ -154,23 +154,12 @@ local AuraContainers = {
 ]]
 }
 
-local function CreateAuraSlotsForButton(button)
-    for _, cf in ipairs(AuraContainers) do
-        local name = button:GetName()
-        local options = {
-            sortMethod = AuraContainerSortMethod.ExpirationOnly,
-            sortDirection = AuraContainerSortDirection.Reverse,
-            templateNames = cf.templateNames,
-            initializeFrame = cf.initializeFrame and function (f) cf.initializeFrame(f, cf) end
-        }
-        local auraSlotFilter = cf.filter .. '|PLAYER'
-        local as = cf.container:AddAuraSlot(name, auraSlotFilter, options)
-        PixelUtil.SetSize(as, button:GetSize())
-        as:SetPoint("CENTER", button)
-        local scale = button:GetEffectiveScale() / cf.container:GetParent():GetEffectiveScale()
-        as:SetFrameLevel(button.cooldown:GetFrameLevel()+1)
-        cf.auraSlots[name] = as
-    end
+local function AttachAuraSlotToButton(cf, as, button)
+    PixelUtil.SetSize(as, button:GetSize())
+    as:SetPoint("CENTER", button)
+    local scale = button:GetEffectiveScale() / cf.container:GetParent():GetEffectiveScale()
+    as:SetScale(scale)
+    as:SetFrameLevel(button.cooldown:GetFrameLevel()+1)
 end
 
 local function HideAuraContainers()
@@ -185,11 +174,45 @@ local function ShowAuraContainers()
     end
 end
 
+local function CreatePoolAuraSlot(cf)
+    local options = {
+        sortMethod = AuraContainerSortMethod.ExpirationOnly,
+        sortDirection = AuraContainerSortDirection.Reverse,
+        templateNames = cf.templateNames,
+        initializeFrame = cf.initializeFrame and function (f) cf.initializeFrame(f, cf) end
+    }
+    local name = tostring(cf.auraSlotPool:GetNumActive() + 1)
+    local auraSlotFilter = cf.filter .. '|PLAYER'
+    local as = cf.container:AddAuraSlot(name, auraSlotFilter, options)
+    cf.auraSlotName[as] = name
+    return as
+end
+
+local function ResetPoolAuraSlot(cf, as)
+    local name = cf.auraSlotName[as]
+    local candidateFilters = { maxDuration = 0, includeSpellIDs = {} }
+    cf.container:SetAuraSlotCandidateFilters(name, candidateFilters)
+    cf.auraSlotActionID[as] = nil
+    as:ClearAllPoints()
+end
+
 local function CreateAuraContainers()
     for _, cf in ipairs(AuraContainers) do
         cf.container = CreateFrame('AuraContainer', nil, UIParent, 'CustomAuraContainerTemplate')
         cf.container:SetUnit(cf.unit)
-        cf.auraSlots = {}
+        cf.auraSlotName = {}
+        cf.auraSlotActionID = {}
+        cf.auraSlotPool = CreateObjectPool(
+                            function () return CreatePoolAuraSlot(cf) end,
+                            function (_, as) ResetPoolAuraSlot(cf, as) end
+                        )
+        -- AuraSlot can only be made reliably before PLAYER_LOGIN, so we have
+        -- to precreate the maximum number we might need, hoping to not go
+        -- too much into overkill.
+        for i = 1, 240 do
+            cf.auraSlotPool:Acquire()
+        end
+        cf.auraSlotPool:ReleaseAll()
     end
 end
 
@@ -212,33 +235,15 @@ local function OnTargetChanged()
     end
 end
 
-local function CreateAuraSlots()
-    for b in EnumerateActionButtons() do
-        CreateAuraSlotsForButton(b)
-    end
-end
-
 local BadRestrictions = { 'Combat', 'Encounter', 'ChallengeMode', 'PvPMatch' }
 
-local function IsSetScaleAllowed()
+local function IsUpdateAllowed()
     for _, r in ipairs(BadRestrictions) do
         if C_RestrictedActions.IsAddOnRestrictionActive(Enum.AddOnRestrictionType[r]) then
             return false
         end
     end
     return true
-end
-
-local function ApplyAuraSlotScales(ignoreRestrictions)
-    if ignoreRestrictions or IsSetScaleAllowed() then
-        for _, cf in ipairs(AuraContainers) do
-            for name, as in pairs(cf.auraSlots) do
-                local button = _G[name]
-                local scale = button:GetEffectiveScale() / UIParent:GetEffectiveScale()
-                as:SetScale(scale)
-            end
-        end
-    end
 end
 
 local function GetActionCandidateFilters(actionID)
@@ -283,16 +288,32 @@ end
 -- scale problem, but the cost is having over a thousand AuraContainer and
 -- I don't know how well this scales.
 
-local function UpdateOverlayFilters()
-    for b in EnumerateActionButtons() do
-        local name = b:GetName()
-        local action = b:IsVisible() and b.action or 0
-        for _, cf in ipairs(AuraContainers) do
+local function UpdateAuraSlotFilters()
+    for _, cf in ipairs(AuraContainers) do
+        for as in cf.auraSlotPool:EnumerateActive() do
+            local name = cf.auraSlotName[as]
+            local action = cf.auraSlotActionID[as]
             local candidateFilters = GetActionCandidateFilters(action, cf.filter)
             cf.addFilters(candidateFilters, cf, action)
             cf.container:SetAuraSlotCandidateFilters(name, candidateFilters)
         end
     end
+end
+
+local function UpdateAuraSlots(ignoreRestrictions)
+    if ignoreRestrictions or IsUpdateAllowed() then
+        for _, cf in ipairs(AuraContainers) do
+            cf.auraSlotPool:ReleaseAll()
+            for b in EnumerateActionButtons() do
+                if b:IsShown() then
+                    local as = cf.auraSlotPool:Acquire()
+                    cf.auraSlotActionID[as] = b.action
+                    AttachAuraSlotToButton(cf, as, b)
+                end
+            end
+        end
+    end
+    UpdateAuraSlotFilters()
 end
 
 local EventFrame = CreateFrame('Frame')
@@ -329,7 +350,7 @@ local function OnEditModeEnter()
 end
 
 local function OnEditModeExit()
-    ApplyAuraSlotScales()
+    UpdateAuraSlots()
     ShowAuraContainers()
 end
 
@@ -340,25 +361,24 @@ local function Initialize()
     FrameUtil.RegisterFrameForEvents(EventFrame, GetKeysArray(AllEvents))
     EventRegistry:RegisterCallback("EditMode.Enter", OnEditModeEnter)
     EventRegistry:RegisterCallback("EditMode.Exit", OnEditModeExit)
+    ScanLinkedSpells()
     -- Buttons haven't been scaled at addon loaded, need to scale after. This
     -- is safe at PLAYER_LOGIN even under restrictions.
-    ApplyAuraSlotScales(true)
-    ScanLinkedSpells()
-    UpdateOverlayFilters()
+    UpdateAuraSlots(true)
 end
 
 local function OnEvent(_, event, ...)
     if event == 'PLAYER_LOGIN' then
         Initialize()
     elseif event == 'ADDON_RESTRICTION_STATE_CHANGED' then
-        ApplyAuraSlotScales()
+        UpdateAuraSlots()
     elseif event == 'EDIT_MODE_LAYOUTS_UPDATED' then
-        ApplyAuraSlotScales()
+        UpdateAuraSlots()
     elseif UpdateFiltersEvents[event] then
-        UpdateOverlayFilters()
+        UpdateAuraSlotFilters()
     elseif ScanLinkedSpellsEvents[event] then
         ScanLinkedSpells()
-        UpdateOverlayFilters()
+        UpdateAuraSlotFilters()
     elseif event == 'PLAYER_TARGET_CHANGED' then
         OnTargetChanged()
     elseif event == 'UNIT_FACTION' then
@@ -376,5 +396,6 @@ do
     EventFrame:RegisterEvent('PLAYER_LOGIN')
     EventFrame:SetScript('OnEvent', OnEvent)
     CreateAuraContainers()
-    CreateAuraSlots()
 end
+
+_G.ABA = AuraContainers
