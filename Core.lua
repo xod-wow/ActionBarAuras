@@ -135,9 +135,6 @@ local AuraContainers = {
         addFilters =
             function (t, cf, actionID)
                 t.isHarmful = true
-                if UnitCanAssist('player', 'target', true, true) then
-                    t.maxDuration = 0
-                end
             end,
     }
 --[[
@@ -196,10 +193,21 @@ local function CreateAuraContainers()
     end
 end
 
-local function UpdateAllAuras()
+local function OnTargetChanged()
     for _, cf in ipairs(AuraContainers) do
         if cf.unit == 'target' then
-            cf.container:UpdateAllAuras()
+            local enabled = cf.container:IsEnabled()
+            if UnitCanAssist('player', 'target', true, true) then
+                if enabled then
+                    cf.container:SetEnabled(false)
+                end
+            else
+                if not enabled then
+                    cf.container:SetEnabled(true)
+                else
+                    cf.container:UpdateAllAuras()
+                end
+            end
         end
     end
 end
@@ -352,13 +360,13 @@ local function OnEvent(_, event, ...)
         ScanLinkedSpells()
         UpdateOverlayFilters()
     elseif event == 'PLAYER_TARGET_CHANGED' then
-        UpdateAllAuras()
+        OnTargetChanged()
     elseif event == 'UNIT_FACTION' then
         -- Maybe what's fired when you get MC and previously attackable target
         -- becomes friendly?
         local unitToken = ...
         if unitToken == 'target' then
-            UpdateAllAuras()
+            OnTargetChanged()
         end
     end
 end
