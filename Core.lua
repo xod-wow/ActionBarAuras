@@ -100,6 +100,7 @@ local AuraContainers = {
         color = CreateColor(0, 0.7, 0, 0.5),
         templateNames = { 'ABAOverlayAuraTemplate' },
         initializeFrame = InitializeOverlay,
+        includeRaidBuffs = true,
         addFilters =
             function (t, cf, actionID)
                 t.isHelpful = true
@@ -133,143 +134,140 @@ local AuraContainers = {
 ]]
 }
 
-local function CreateAuraSlotsForButton(button)
-    for _, cf in ipairs(AuraContainers) do
-        local name = button:GetName()
-        local options = {
-            sortMethod = AuraContainerSortMethod.ExpirationOnly,
-            sortDirection = AuraContainerSortDirection.Reverse,
-            templateNames = cf.templateNames,
-            initializeFrame = cf.initializeFrame and function (f) cf.initializeFrame(f, cf) end
-        }
-        local auraSlotFilter = cf.filter .. '|PLAYER'
-        local as = cf.container:AddAuraSlot(name, auraSlotFilter, options)
-        PixelUtil.SetSize(as, button:GetSize())
-        as:SetPoint("CENTER", button)
-        local scale = button:GetEffectiveScale() / cf.container:GetParent():GetEffectiveScale()
-        as:SetFrameLevel(button.cooldown:GetFrameLevel()+1)
-        cf.auraSlots[name] = as
-    end
+local function CreateButtonAuraSlot(cf, container, button)
+    local options = {
+        sortMethod = AuraContainerSortMethod.ExpirationOnly,
+        sortDirection = AuraContainerSortDirection.Reverse,
+        templateNames = cf.templateNames,
+        initializeFrame = cf.initializeFrame and function (f) cf.initializeFrame(f, cf) end
+    }
+    local auraSlotFilter = cf.filter .. '|PLAYER'
+    local as = container:AddAuraSlot("ABA", auraSlotFilter, options)
+    PixelUtil.SetSize(as, button:GetSize())
+    as:SetPoint("CENTER", button)
+    as:SetFrameLevel(button.cooldown:GetFrameLevel()+1)
 end
 
 local function HideAuraContainers()
     for _, cf in ipairs(AuraContainers) do
-        cf.container:Hide()
+        for _, c in pairs(cf.buttonContainers) do
+            c:Hide()
+        end
     end
 end
 
 local function ShowAuraContainers()
     for _, cf in ipairs(AuraContainers) do
-        cf.container:Show()
+        for _, c in pairs(cf.buttonContainers) do
+            c:Show()
+        end
     end
 end
 
+-- This creates an insane amount of AuraContainers, two per ActionButton.
+--
+-- I don't know if this is necessarily less computationally efficient in any
+-- way, it might make no difference.
+--
+-- I tried making one for each target/auratype combo with an AuraSlot per
+-- button, but it was a big hassle (a) getting the scaling right since you
+-- can't SetParent the AuraSlot, and (b) doing the disabling since
+-- SetEnabled() is only on containers not slots.
+--
+-- This also scales properly if the actionbars change in combat or in M+, which
+-- is impossible to do with the other approach.
+--
+-- If it's necessary to go back to one container multiple slots, make sure
+-- to test it with actions on bars/buttons that aren't shown.
+--
+-- In theory in 12.1.5 we will get SetUnit per slot, which will allow one
+-- container per button with a slot for each category. Can then also
+-- prioritize them and not double up if we have both a buff and a debuff.
+
 local function CreateAuraContainers()
     for _, cf in ipairs(AuraContainers) do
-        cf.container = CreateFrame('AuraContainer', nil, UIParent, 'CustomAuraContainerTemplate')
-        cf.container:SetUnit(cf.unit)
-        cf.auraSlots = {}
+        cf.buttonContainers = {}
+        for button in EnumerateActionButtons() do
+            local name = button:GetName() ..'ABAContainer'
+            local c = CreateFrame('AuraContainer', name, button, 'CustomAuraContainerTemplate')
+            c:SetPoint("TOPLEFT")
+            c:SetUnit(cf.unit)
+            CreateButtonAuraSlot(cf, c, button)
+            cf.buttonContainers[button:GetName()] = c
+        end
     end
 end
 
 local function OnTargetChanged()
     for _, cf in ipairs(AuraContainers) do
         if cf.unit == 'target' then
-            local enabled = cf.container:IsEnabled()
-            if UnitCanAssist('player', 'target', true, true) then
-                if enabled then
-                    cf.container:SetEnabled(false)
-                end
-            else
-                if not enabled then
-                    cf.container:SetEnabled(true)
-                else
-                    cf.container:UpdateAllAuras()
-                end
+            local shouldEnable = not UnitCanAssist('player', 'target', true, true)
+            for _, c in pairs(cf.buttonContainers) do
+                c:SetEnabled(shouldEnable)
+                c:UpdateAllAuras()
             end
         end
-    end
-end
-
-local function CreateAuraSlots()
-    for b in EnumerateActionButtons() do
-        CreateAuraSlotsForButton(b)
     end
 end
 
 local BadRestrictions = { 'Combat', 'Encounter', 'ChallengeMode', 'PvPMatch' }
 
-local function IsSetScaleAllowed()
-    for _, r in ipairs(BadRestrictions) do
-        if C_RestrictedActions.IsAddOnRestrictionActive(Enum.AddOnRestrictionType[r]) then
-            return false
-        end
-    end
-    return true
-end
-
-local function ApplyAuraSlotScales(ignoreRestrictions)
-    if ignoreRestrictions or IsSetScaleAllowed() then
-        for _, cf in ipairs(AuraContainers) do
-            for name, as in pairs(cf.auraSlots) do
-                local button = _G[name]
-                local scale = button:GetEffectiveScale() / UIParent:GetEffectiveScale()
-                as:SetScale(scale)
-            end
-        end
-    end
-end
-
-local function GetActionCandidateFilters(actionID)
+local function GetActionSpellID(actionID)
     local actionType, id, actionSubType = GetActionInfo(actionID)
-    local filters = {
-        isFromPlayerOrPlayerPet = true,
-        includeSpellIDs = {},
-    }
     if (actionType =="spell" or actionSubType == "spell") and id then
-        filters.includeSpellIDs[id] = true
-        -- Handle spells like Zenith which change to a completely different
-        -- spell when active that is not linked.
-        local baseSpellID = C_Spell.GetBaseSpell(id)
-        filters.includeSpellIDs[baseSpellID] = true
+        return id
     elseif actionType == "item" then
         local _, spellID = C_Item.GetItemSpell(id)
-        filters.includeSpellIDs[id] = true
+        return spellID
     elseif actionType == "macro" and actionSubType == "item" then
         local actionName = GetActionText(actionID)
         local _, link = GetMacroItem(actionName)
         if link then
             local _, spellID = C_Item.GetItemSpell(link)
-            if spellID then
-                filters.includeSpellIDs[spellID] = true
-            end
+            return spellID
         end
     end
-    for spellID in pairs(filters.includeSpellIDs) do
-        Mixin(filters.includeSpellIDs, GetLinkedSpellIDs(spellID))
-    end
-    return filters
 end
 
--- Because the AuraSlots can't be reparented they don't get their shown state
--- managed by their associated ActionButton, and will appear in seemingly
--- random spots for hidden ActionButtons. As a fairly bad work-around for this
--- we set their action to 0 which ends up with a blank includeSpellIDs which
--- matches nothing and never shows.
---
--- The other way to do this is to create one AuraContainer per AuraSlot, since
--- the AuraContainers can be reparented to the button. This also solves the
--- scale problem, but the cost is having over a thousand AuraContainer and
--- I don't know how well this scales.
+local function GetFilters(cf, spellID)
+    if cf.includeRaidBuffs and addon.RaidBuffsBySpellID[spellID] then
+        local candidateFilters = {
+            includeSpellIDs = addon.RaidBuffsBySpellID[spellID]
+        }
+        Mixin(candidateFilters.includeSpellIDs, addon.RaidBuffsBySpellID[spellID])
+        cf.addFilters(candidateFilters)
+        return cf.filter, candidateFilters
+    else
+        local candidateFilters = {
+            includeSpellIDs = {}
+        }
+        -- Spell itself and its linked spellds
+        candidateFilters.includeSpellIDs[spellID] = true
+        Mixin(candidateFilters.includeSpellIDs, GetLinkedSpellIDs(spellID))
+        -- Base spell if it's different
+        local baseSpellID = C_Spell.GetBaseSpell(spellID)
+        if baseSpellID ~= spellID then
+            candidateFilters.includeSpellIDs[baseSpellID] = true
+            Mixin(candidateFilters.includeSpellIDs, GetLinkedSpellIDs(baseSpellID))
+        end
+        cf.addFilters(candidateFilters)
+        return cf.filter..'|PLAYER', candidateFilters
+    end
+end
 
 local function UpdateOverlayFilters()
-    for b in EnumerateActionButtons() do
-        local name = b:GetName()
-        local action = b:IsVisible() and b.action or 0
-        for _, cf in ipairs(AuraContainers) do
-            local candidateFilters = GetActionCandidateFilters(action, cf.filter)
-            cf.addFilters(candidateFilters, cf, action)
-            cf.container:SetAuraSlotCandidateFilters(name, candidateFilters)
+    for _, cf in ipairs(AuraContainers) do
+        for name, c in pairs(cf.buttonContainers) do
+            local b = _G[name]
+            local spellID = GetActionSpellID(b.action)
+            if not spellID or not b:IsVisible() then
+                c:SetEnabled(false)
+            else
+                local filterString, candidateFilters = GetFilters(cf, spellID)
+                c:SetAuraSlotFilterString("ABA", filterString)
+                c:SetAuraSlotCandidateFilters("ABA", candidateFilters)
+                c:SetEnabled(true)
+            end
         end
     end
 end
@@ -308,20 +306,16 @@ local function OnEditModeEnter()
 end
 
 local function OnEditModeExit()
-    ApplyAuraSlotScales()
     ShowAuraContainers()
 end
 
 local function Initialize()
     addon.InitializeOptions()
-    EventFrame:RegisterEvent('ADDON_RESTRICTION_STATE_CHANGED')
-    EventFrame:RegisterEvent('EDIT_MODE_LAYOUTS_UPDATED')
     FrameUtil.RegisterFrameForEvents(EventFrame, GetKeysArray(AllEvents))
     EventRegistry:RegisterCallback("EditMode.Enter", OnEditModeEnter)
     EventRegistry:RegisterCallback("EditMode.Exit", OnEditModeExit)
     -- Buttons haven't been scaled at addon loaded, need to scale after. This
     -- is safe at PLAYER_LOGIN even under restrictions.
-    ApplyAuraSlotScales(true)
     ScanLinkedSpells()
     UpdateOverlayFilters()
 end
@@ -329,10 +323,6 @@ end
 local function OnEvent(_, event, ...)
     if event == 'PLAYER_LOGIN' then
         Initialize()
-    elseif event == 'ADDON_RESTRICTION_STATE_CHANGED' then
-        ApplyAuraSlotScales()
-    elseif event == 'EDIT_MODE_LAYOUTS_UPDATED' then
-        ApplyAuraSlotScales()
     elseif UpdateFiltersEvents[event] then
         UpdateOverlayFilters()
     elseif ScanLinkedSpellsEvents[event] then
@@ -355,5 +345,4 @@ do
     EventFrame:RegisterEvent('PLAYER_LOGIN')
     EventFrame:SetScript('OnEvent', OnEvent)
     CreateAuraContainers()
-    CreateAuraSlots()
 end
