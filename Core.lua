@@ -14,7 +14,7 @@ local function ScanLinkedSpells()
             local info = C_CooldownViewer.GetCooldownViewerCooldownInfo(cooldownID)
             if info.spellID then
                 local name = C_Spell.GetSpellName(info.spellID)
-                LinkedSpellIDs[name] = LinkedSpellIDs[info.spellID] or {}
+                LinkedSpellIDs[name] = LinkedSpellIDs[name] or {}
                 LinkedSpellIDs[name][info.spellID] = true
                 for _, spellID in ipairs(info.linkedSpellIDs) do
                     LinkedSpellIDs[name][spellID] = true
