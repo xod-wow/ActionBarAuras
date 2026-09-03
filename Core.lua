@@ -198,19 +198,27 @@ local function CreateAuraContainers()
     end
 end
 
-local function OnTargetChanged()
-    for _, cf in ipairs(AuraContainers) do
-        if cf.unit == 'target' then
-            local shouldEnable = not UnitCanAssist('player', 'target', true, true)
-            for _, c in pairs(cf.buttonContainers) do
-                c:SetEnabled(shouldEnable)
-                c:UpdateAllAuras()
-            end
-        end
+local function CanEnable(cf)
+    local canAssist = UnitCanAssist('player', cf.unit, true, true)
+    if cf.filter == 'HARMFUL' and canAssist then
+        return false
+    elseif cf.filter == 'HELPFUL' and not canAssist then
+        return false
+    else
+        return true
     end
 end
 
 local BadRestrictions = { 'Combat', 'Encounter', 'ChallengeMode', 'PvPMatch' }
+
+local function IsModifyAllowed()
+    for _, r in ipairs(BadRestrictions) do
+        if C_RestrictedActions.IsAddOnRestrictionActive(Enum.AddOnRestrictionType[r]) then
+            return false
+        end
+    end
+    return true
+end
 
 local function GetActionSpellID(actionID)
     local actionType, id, actionSubType = GetActionInfo(actionID)
@@ -255,18 +263,21 @@ local function GetFilters(cf, spellID)
     end
 end
 
-local function UpdateOverlayFilters()
+local function UpdateOverlayFilters(matchfunc)
     for _, cf in ipairs(AuraContainers) do
-        for name, c in pairs(cf.buttonContainers) do
-            local b = _G[name]
-            local spellID = GetActionSpellID(b.action)
-            if not spellID or not b:IsVisible() then
-                c:SetEnabled(false)
-            else
-                local filterString, candidateFilters = GetFilters(cf, spellID)
-                c:SetAuraSlotFilterString("ABA", filterString)
-                c:SetAuraSlotCandidateFilters("ABA", candidateFilters)
-                c:SetEnabled(true)
+        if not matchfunc or matchfunc(cf) then
+            local canEnable = CanEnable(cf)
+            for name, c in pairs(cf.buttonContainers) do
+                local b = _G[name]
+                local spellID = GetActionSpellID(b.action)
+                if not canEnable or not spellID or not b:IsVisible() then
+                    c:SetEnabled(false)
+                else
+                    local filterString, candidateFilters = GetFilters(cf, spellID)
+                    c:SetAuraSlotFilterString("ABA", filterString)
+                    c:SetAuraSlotCandidateFilters("ABA", candidateFilters)
+                    c:SetEnabled(true)
+                end
             end
         end
     end
@@ -314,13 +325,12 @@ local function Initialize()
     FrameUtil.RegisterFrameForEvents(EventFrame, GetKeysArray(AllEvents))
     EventRegistry:RegisterCallback("EditMode.Enter", OnEditModeEnter)
     EventRegistry:RegisterCallback("EditMode.Exit", OnEditModeExit)
-    -- Buttons haven't been scaled at addon loaded, need to scale after. This
-    -- is safe at PLAYER_LOGIN even under restrictions.
     ScanLinkedSpells()
     UpdateOverlayFilters()
 end
 
 local function OnEvent(_, event, ...)
+    local function cfmatchtarget(cf) return cf.unit == 'target' end
     if event == 'PLAYER_LOGIN' then
         Initialize()
     elseif UpdateFiltersEvents[event] then
@@ -329,13 +339,13 @@ local function OnEvent(_, event, ...)
         ScanLinkedSpells()
         UpdateOverlayFilters()
     elseif event == 'PLAYER_TARGET_CHANGED' then
-        OnTargetChanged()
+        UpdateOverlayFilters(cfmatchtarget)
     elseif event == 'UNIT_FACTION' then
         -- Maybe what's fired when you get MC and previously attackable target
         -- becomes friendly?
         local unitToken = ...
         if unitToken == 'target' then
-            OnTargetChanged()
+            UpdateOverlayFilters(cfmatchtarget)
         end
     end
 end
