@@ -1,0 +1,121 @@
+<Ui>
+
+<Script file="Abilities.lua" />
+
+<Button name="ABASelectButtonTemplate" virtual="true">
+    <HighlightTexture atlas="Options_List_Hover" />
+    <Layers>
+        <Layer level="BACKGROUND">
+            <Texture parentKey="SelectedTexture" atlas="Options_List_Active" setAllPoints="true" hidden="true" />
+        </Layer>
+    </Layers>
+</Button>
+
+<Button name="ABAAbilityItemTemplate" inherits="ABASelectButtonTemplate" virtual="true">
+    <Size y="40" />
+    <Layers>
+        <Layer level="ARTWORK">
+            <Texture parentKey="Icon" >
+                <Size x="32" y="32" />
+                <Anchors>
+                    <Anchor point="LEFT" x="4" />
+                </Anchors>
+            </Texture>
+            <FontString parentKey="Name" justifyH="LEFT" inherits="GameFontNormal">
+                <Anchors>
+                    <Anchor point="LEFT" relativeKey="$parent.Icon" relativePoint="RIGHT" x="8" />
+                    <Anchor point="RIGHT" x="-8" />
+                </Anchors>
+            </FontString>
+        </Layer>
+    </Layers>
+</Button>
+
+<Button name="ABAAbilityHeaderTemplate" virtual="true">
+    <HighlightTexture atlas="Options_List_Hover" />
+    <ButtonText parentKey="Text" inherits="GameFontNormalLarge" justifyH="LEFT" />
+    <Size y="25" />
+</Button>
+
+<Button name="ABALinkedSpellItemTemplate" virtual="true">
+    <Size y="18" />
+    <Layers>
+        <Layer level="ARTWORK">
+            <Texture parentKey="Icon" >
+                <Size x="16" y="16" />
+                <Anchors>
+                    <Anchor point="LEFT" x="4" />
+                </Anchors>
+            </Texture>
+            <FontString parentKey="Name" justifyH="LEFT" inherits="GameFontNormalSmall">
+                <Anchors>
+                    <Anchor point="LEFT" relativeKey="$parent.Icon" relativePoint="RIGHT" x="8" />
+                    <Anchor point="RIGHT" x="-4" />
+                </Anchors>
+            </FontString>
+        </Layer>
+    </Layers>
+</Button>
+
+<Frame name="ABAAbilitiesPanel" hidden="true">
+    <Mixins>
+        <Mixin key="AbilitiesPanelMixin" source="local" />
+    </Mixins>
+
+    <Scripts>
+        <OnLoad method="OnLoad" />
+        <OnShow method="OnShow" />
+    </Scripts>
+
+    <Frames>
+        <ScrollFrame parentKey="ScrollBox" inherits="WoWScrollBoxList">
+            <Size x="280" />
+            <Anchors>
+                <Anchor point="TOPLEFT" x="8" y="-8" />
+                <Anchor point="BOTTOM" y="8" />
+            </Anchors>
+        </ScrollFrame>
+        <EventFrame parentKey="ScrollBar" inherits="MinimalScrollBar" frameStrata="HIGH">
+            <KeyValues>
+                <KeyValue key="hideIfUnscrollable" value="true" type="boolean" />
+            </KeyValues>
+            <Anchors>
+                <Anchor point="TOPRIGHT" relativeKey="$parent.ScrollBox" x="-2" y="0"/>
+                <Anchor point="BOTTOMRIGHT" relativeKey="$parent.ScrollBox" x="-2" y="0"/>
+            </Anchors>
+        </EventFrame>
+        <Frame parentKey="Settings">
+            <Layers>
+                <Layer level="BACKGROUND">
+                    <Texture setAllPoints="true">
+                        <Color r="1" g="1" b="1" a="0.33" />
+                    </Texture>
+                </Layer>
+            </Layers>
+            <Anchors>
+                <Anchor point="TOPLEFT" relativeKey="$parent.ScrollBar" relativePoint="TOPRIGHT" x="8"/>
+                <Anchor point="BOTTOMRIGHT" x="-8" y="8" />
+            </Anchors>
+            <Frames>
+                <ScrollFrame parentKey="ScrollBox" inherits="WoWScrollBoxList">
+                    <Anchors>
+                        <Anchor point="TOPLEFT" x="4" y="-4" />
+                        <Anchor point="BOTTOMRIGHT" x="-4" y="4" />
+                    </Anchors>
+                </ScrollFrame>
+                <EventFrame parentKey="ScrollBar" inherits="MinimalScrollBar" frameStrata="HIGH">
+                    <KeyValues>
+                        <KeyValue key="hideIfUnscrollable" value="false" type="boolean" />
+                    </KeyValues>
+                    <Anchors>
+                        <Anchor point="TOPRIGHT" relativeKey="$parent.LinkedSpells" x="-2" />
+                        <Anchor point="BOTTOMRIGHT" relativeKey="$parent.LinkedSpells" x="-2" />
+                    </Anchors>
+                </EventFrame>
+            </Frames>
+        </Frame>
+    </Frames>
+</Frame>
+
+</Ui>
+

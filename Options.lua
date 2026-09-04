@@ -9,12 +9,18 @@ local _, addon = ...
 
 local defaults = {
     profile = {
-        ignoreAbilities = {},
-        ignoreAuraSpellIDs = {},
-        extraLinkedSpellIDs = {
-            [100784]    = { [202090] = true },
-            [30455]     = { [1221389] = true },
-        },
+        abilities = {
+            [100784] = {
+                linkedSpellIDs = {
+                    [202090] = true
+                }
+            },
+            [30455] = {
+                linkedSpellIDS = {
+                    [1221389] = true
+                }
+            },
+        }
     },
 }
 

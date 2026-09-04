@@ -24,15 +24,27 @@ local function ScanLinkedSpells()
     end
 end
 
-local function GetLinkedSpellIDs(spellID)
-    local spellIDs = {}
+local function AddLinkedSpellIDs(t, spellID)
     local name = C_Spell.GetSpellName(spellID)
     if LinkedSpellIDs[name] then
-        Mixin(spellIDs, LinkedSpellIDs[name])
+        Mixin(t, LinkedSpellIDs[name])
     end
-    if addon.db.profile.extraLinkedSpellIDs[spellID] then
-        Mixin(spellIDs, addon.db.profile.extraLinkedSpellIDs[spellID])
+    if addon.db.profile.abilities[spellID] then
+        Mixin(t, addon.db.profile.abilities[spellID].linkedSpellIDs)
     end
+end
+
+function addon.GetIncludeSpellIDs(spellID)
+    local spellIDs = { [spellID] = true }
+
+    AddLinkedSpellIDs(spellIDs, spellID)
+
+    -- Base spell if it's different
+    local baseSpellID = C_Spell.GetBaseSpell(spellID)
+    if baseSpellID ~= spellID then
+        AddLinkedSpellIDs(spellIDs, baseSpellID)
+    end
+
     return spellIDs
 end
 
@@ -237,30 +249,26 @@ local function GetActionSpellID(actionID)
     end
 end
 
-local function GetFilters(cf, spellID)
-    if cf.includeRaidBuffs and addon.RaidBuffsBySpellID[spellID] then
-        local candidateFilters = {
-            includeSpellIDs = addon.RaidBuffsBySpellID[spellID]
-        }
-        Mixin(candidateFilters.includeSpellIDs, addon.RaidBuffsBySpellID[spellID])
-        cf.addFilters(candidateFilters)
-        return cf.filter, candidateFilters
-    else
-        local candidateFilters = {
-            includeSpellIDs = {}
-        }
-        -- Spell itself and its linked spellds
-        candidateFilters.includeSpellIDs[spellID] = true
-        Mixin(candidateFilters.includeSpellIDs, GetLinkedSpellIDs(spellID))
-        -- Base spell if it's different
-        local baseSpellID = C_Spell.GetBaseSpell(spellID)
-        if baseSpellID ~= spellID then
-            candidateFilters.includeSpellIDs[baseSpellID] = true
-            Mixin(candidateFilters.includeSpellIDs, GetLinkedSpellIDs(baseSpellID))
-        end
-        cf.addFilters(candidateFilters)
-        return cf.filter..'|PLAYER', candidateFilters
-    end
+local function IsRaidBuff(spellID)
+    return addon.RaidBuffsBySpellID[spellID] ~= nil
+end
+
+local function ApplyRaidFilters(cf, c, spellID)
+    local candidateFilters = {
+        includeSpellIDs = CopyTable(addon.RaidBuffsBySpellID[spellID])
+    }
+    cf.addFilters(candidateFilters)
+    c:SetAuraSlotFilterString("ABA", cf.filter..'|RAID')
+    c:SetAuraSlotCandidateFilters("ABA", candidateFilters)
+end
+
+local function ApplyFilters(cf, c, spellID)
+    local candidateFilters = {
+        includeSpellIDs = addon.GetIncludeSpellIDs(spellID)
+    }
+    cf.addFilters(candidateFilters)
+    c:SetAuraSlotFilterString("ABA", cf.filter..'|PLAYER')
+    c:SetAuraSlotCandidateFilters("ABA", candidateFilters)
 end
 
 local function UpdateOverlayFilters(matchfunc)
@@ -272,10 +280,15 @@ local function UpdateOverlayFilters(matchfunc)
                 local spellID = GetActionSpellID(b.action)
                 if not canEnable or not spellID or not b:IsVisible() then
                     c:SetEnabled(false)
+                elseif IsRaidBuff(spellID) then
+                    if cf.includeRaidBuffs then
+                        ApplyRaidFilters(cf, c, spellID)
+                        c:SetEnabled(true)
+                    else
+                        c:SetEnabled(false)
+                    end
                 else
-                    local filterString, candidateFilters = GetFilters(cf, spellID)
-                    c:SetAuraSlotFilterString("ABA", filterString)
-                    c:SetAuraSlotCandidateFilters("ABA", candidateFilters)
+                    ApplyFilters(cf, c, spellID)
                     c:SetEnabled(true)
                 end
             end

@@ -1,5 +1,5 @@
 ## Interface: 120100
-## Title: ActionBarAuras
+## Title: ActionBar Auras
 ## IconTexture: Interface\Icons\ability_deathknight_heartstopaura
 ## Version: @project-version@
 ## Author: Xodiv-Nagrand
@@ -14,3 +14,5 @@ Overlay.xml
 Options.lua
 Data\RaidBuffs.lua
 Core.lua
+
+UI\UI.xml
