@@ -16,7 +16,7 @@ local defaults = {
                 }
             },
             [30455] = {
-                linkedSpellIDS = {
+                linkedSpellIDs = {
                     [1221389] = true
                 }
             },
