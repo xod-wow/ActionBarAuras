@@ -43,6 +43,7 @@ read_globals =  {
     'LibStub',
     'Mixin',
     'NUM_ACTIONBAR_BUTTONS',
+    'NumberFontNormal',
     'PixelUtil',
     'UIParent',
     'UnitCanAssist',
