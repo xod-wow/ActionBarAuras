@@ -9,6 +9,12 @@ local _, addon = ...
 
 -- local fontPath, fontSize, fontFlags = NumberFontNormal:GetFont()
 
+local DefaultAbility = {
+    disable = false,
+    disableCDM = false,
+    linkedSpellIDs = { },
+}
+
 local defaults = {
     profile = {
         overlay = {
@@ -30,14 +36,13 @@ local defaults = {
             anchor = { point="TOPLEFT", x=3, y=-3 },
         },
         abilities = {
+            ['*'] = DefaultAbility,
             [100784] = {
-                enabled = true,
                 linkedSpellIDs = {
                     [202090] = true
                 }
             },
             [30455] = {
-                enabled = true,
                 linkedSpellIDs = {
                     [1221389] = true
                 }

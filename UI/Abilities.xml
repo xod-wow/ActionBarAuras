@@ -2,6 +2,16 @@
 
 <Script file="Abilities.lua" />
 
+
+<CheckButton name="ABACheckButtonTemplate" inherits="UICheckButtonArtTemplate" virtual="true">
+    <Size x="32" y="32" />
+    <ButtonText inherits="GameFontWhite" parentKey="Text">
+        <Anchors>
+            <Anchor point="LEFT" relativePoint="RIGHT" x="4" y="2" />
+        </Anchors>
+    </ButtonText>
+</CheckButton>
+
 <Button name="ABASelectButtonTemplate" virtual="true">
     <HighlightTexture atlas="Options_List_Hover" />
     <Layers>
@@ -12,19 +22,19 @@
 </Button>
 
 <Button name="ABAAbilityItemTemplate" inherits="ABASelectButtonTemplate" virtual="true">
-    <Size y="40" />
+    <Size y="26" />
     <Layers>
         <Layer level="ARTWORK">
             <Texture parentKey="Icon" >
-                <Size x="32" y="32" />
+                <Size x="20" y="20" />
                 <Anchors>
-                    <Anchor point="LEFT" x="4" />
+                    <Anchor point="LEFT" />
                 </Anchors>
             </Texture>
             <FontString parentKey="Name" justifyH="LEFT" inherits="GameFontNormal">
                 <Anchors>
-                    <Anchor point="LEFT" relativeKey="$parent.Icon" relativePoint="RIGHT" x="8" />
-                    <Anchor point="RIGHT" x="-8" />
+                    <Anchor point="LEFT" relativeKey="$parent.Icon" relativePoint="RIGHT" x="6" />
+                    <Anchor point="RIGHT" x="-4" />
                 </Anchors>
             </FontString>
         </Layer>
@@ -32,24 +42,41 @@
 </Button>
 
 <Button name="ABAAbilityHeaderTemplate" virtual="true">
-    <HighlightTexture atlas="Options_List_Hover" />
-    <ButtonText parentKey="Text" inherits="GameFontNormalLarge" justifyH="LEFT" />
+    <Mixins>
+        <Mixin key="AbilityHeaderMixin" source="local" />
+    </Mixins>
     <Size y="25" />
+    <HighlightTexture atlas="Options_List_Hover" />
+    <Layers>
+        <Layer level="ARTWORK">
+            <Texture parentKey="Toggle">
+                <Size x="22" y="22" />
+                <Anchors>
+                    <Anchor point="LEFT" />
+                </Anchors>
+            </Texture>
+        </Layer>
+    </Layers>
+    <ButtonText parentKey="Text" inherits="GameFontNormalLarge" justifyH="LEFT">
+        <Anchors>
+            <Anchor point="LEFT" relativeKey="$parent.Toggle" relativePoint="RIGHT" x="4" />
+        </Anchors>
+    </ButtonText>
 </Button>
 
 <Button name="ABALinkedSpellItemTemplate" virtual="true">
-    <Size y="18" />
+    <Size y="26" />
     <Layers>
         <Layer level="ARTWORK">
             <Texture parentKey="Icon" >
-                <Size x="16" y="16" />
+                <Size x="20" y="20" />
                 <Anchors>
-                    <Anchor point="LEFT" x="4" />
+                    <Anchor point="LEFT" />
                 </Anchors>
             </Texture>
-            <FontString parentKey="Name" justifyH="LEFT" inherits="GameFontNormalSmall">
+            <FontString parentKey="Name" justifyH="LEFT" inherits="GameFontNormal">
                 <Anchors>
-                    <Anchor point="LEFT" relativeKey="$parent.Icon" relativePoint="RIGHT" x="8" />
+                    <Anchor point="LEFT" relativeKey="$parent.Icon" relativePoint="RIGHT" x="6" />
                     <Anchor point="RIGHT" x="-4" />
                 </Anchors>
             </FontString>
@@ -67,12 +94,27 @@
         <OnShow method="OnShow" />
     </Scripts>
 
+    <Layers>
+        <Layer level="ARTWORK">
+            <FontString parentKey="Title" inherits="GameFontHighlightHuge" justifyH="LEFT" text="ActionBarAuras">
+                <Anchors>
+                    <Anchor point="TOPLEFT" x="7" y="-22" />
+                </Anchors>
+            </FontString>
+            <Texture atlas="Options_HorizontalDivider" useAtlasSize="true">
+                <Anchors>
+                    <Anchor point="TOP" y="-50"/>
+                </Anchors>
+            </Texture>
+        </Layer>
+    </Layers>
+
     <Frames>
         <ScrollFrame parentKey="ScrollBox" inherits="WoWScrollBoxList">
             <Size x="280" />
             <Anchors>
-                <Anchor point="TOPLEFT" x="8" y="-8" />
-                <Anchor point="BOTTOM" y="8" />
+                <Anchor point="TOPLEFT" x="8" y="-64" />
+                <Anchor point="BOTTOM" y="16" />
             </Anchors>
         </ScrollFrame>
         <EventFrame parentKey="ScrollBar" inherits="MinimalScrollBar" frameStrata="HIGH">
@@ -85,34 +127,123 @@
             </Anchors>
         </EventFrame>
         <Frame parentKey="Settings">
+            <Anchors>
+                <Anchor point="TOPLEFT" relativeKey="$parent.ScrollBar" relativePoint="TOPRIGHT" x="4"/>
+                <Anchor point="BOTTOMRIGHT" />
+            </Anchors>
             <Layers>
-                <Layer level="BACKGROUND">
-                    <Texture setAllPoints="true">
-                        <Color r="1" g="1" b="1" a="0.33" />
-                    </Texture>
+                <Layer level="ARTWORK">
+                    <!-- Name is used for the left/right anchors of everything else -->
+                    <FontString parentKey="Name" inherits="GameFontWhiteLarge" justifyH="LEFT">
+                        <Anchors>
+                            <Anchor point="TOPLEFT" x="8" y="-16" />
+                            <Anchor point="RIGHT" x="-8" />
+                        </Anchors>
+                    </FontString>
+                    <FontString parentKey="SpellID" inherits="GameFontHighlight" justifyH="LEFT">
+                        <Anchors>
+                            <Anchor point="TOPLEFT" relativeKey="$parent.Name" relativePoint="BOTTOMLEFT" y="-8" />
+                            <Anchor point="RIGHT" relativeKey="$parent.Name" />
+                        </Anchors>
+                    </FontString>
+                    <FontString parentKey="Description" inherits="GameFontNormal" justifyH="LEFT">
+                        <Anchors>
+                            <Anchor point="TOPLEFT" relativeKey="$parent.SpellID" relativePoint="BOTTOMLEFT" y="-8" />
+                            <Anchor point="RIGHT" relativeKey="$parent.Name" />
+                        </Anchors>
+                    </FontString>
                 </Layer>
             </Layers>
-            <Anchors>
-                <Anchor point="TOPLEFT" relativeKey="$parent.ScrollBar" relativePoint="TOPRIGHT" x="8"/>
-                <Anchor point="BOTTOMRIGHT" x="-8" y="8" />
-            </Anchors>
             <Frames>
-                <ScrollFrame parentKey="ScrollBox" inherits="WoWScrollBoxList">
+                <CheckButton parentKey="Enable" inherits="ABACheckButtonTemplate" text="Show matching auras on this ability">
+                    <Size x="24" y="24" />
                     <Anchors>
-                        <Anchor point="TOPLEFT" x="4" y="-4" />
-                        <Anchor point="BOTTOMRIGHT" x="-4" y="4" />
+                        <Anchor point="TOPLEFT" relativeKey="$parent.Description" relativePoint="BOTTOMLEFT" y="-16" />
+                    </Anchors>
+                </CheckButton>
+                <CheckButton parentKey="EnableCDM" inherits="ABACheckButtonTemplate" text="Enable default auras from Cooldown Manager">
+                    <Size x="24" y="24" />
+                    <Anchors>
+                        <Anchor point="TOPLEFT" relativeKey="$parent.Enable" relativePoint="BOTTOMLEFT" y="-4" />
+                    </Anchors>
+                </CheckButton>
+            </Frames>
+            <Layers>
+                <Layer level="ARTWORK">
+                    <FontString parentKey="DefaultHeader" inherits="GameFontNormalMed2" justifyH="LEFT" text="Default Aura Spells">
+                        <Anchors>
+                            <Anchor point="TOP" relativeKey="$parent.EnableCDM" relativePoint="BOTTOM" y="-16" />
+                            <Anchor point="LEFT" relativeKey="$parent.Name" />
+                            <Anchor point="RIGHT" relativeKey="$parent.Name" />
+                        </Anchors>
+                    </FontString>
+                </Layer>
+            </Layers>
+            <Frames>
+                <ScrollFrame parentKey="DefaultScrollBox" inherits="WoWScrollBoxList">
+                    <Size y="104" />
+                    <Anchors>
+                        <Anchor point="TOPLEFT" relativeKey="$parent.DefaultHeader" relativePoint="BOTTOMLEFT" y="-12" x="8" />
+                        <Anchor point="RIGHT" relativeKey="$parent.Name" x="-4" />
                     </Anchors>
                 </ScrollFrame>
-                <EventFrame parentKey="ScrollBar" inherits="MinimalScrollBar" frameStrata="HIGH">
+                <EventFrame parentKey="DefaultScrollBar" inherits="MinimalScrollBar" frameStrata="HIGH">
                     <KeyValues>
-                        <KeyValue key="hideIfUnscrollable" value="false" type="boolean" />
+                        <KeyValue key="hideIfUnscrollable" value="true" type="boolean" />
                     </KeyValues>
                     <Anchors>
-                        <Anchor point="TOPRIGHT" relativeKey="$parent.LinkedSpells" x="-2" />
-                        <Anchor point="BOTTOMRIGHT" relativeKey="$parent.LinkedSpells" x="-2" />
+                        <Anchor point="TOPRIGHT" relativeKey="$parent.DefaultScrollBox" x="-2" />
+                        <Anchor point="BOTTOMRIGHT" relativeKey="$parent.DefaultScrollBox" x="-2" />
                     </Anchors>
                 </EventFrame>
             </Frames>
+            <Layers>
+                <Layer level="ARTWORK">
+                    <FontString parentKey="ExtraHeader" inherits="GameFontNormalMed2" justifyH="LEFT" text="Extra Aura Spells">
+                        <Anchors>
+                            <Anchor point="TOP" relativeKey="$parent.DefaultScrollBox" relativePoint="BOTTOM" y="-16" />
+                            <Anchor point="LEFT" relativeKey="$parent.Name" />
+                            <Anchor point="RIGHT" relativeKey="$parent.Name" />
+                        </Anchors>
+                    </FontString>
+                </Layer>
+            </Layers>
+            <Frames>
+                <ScrollFrame parentKey="ExtraScrollBox" inherits="WoWScrollBoxList">
+                    <Anchors>
+                        <Anchor point="TOPLEFT" relativeKey="$parent.ExtraHeader" relativePoint="BOTTOMLEFT" y="-12" x="8" />
+                        <Anchor point="RIGHT" relativeKey="$parent.Name" x="-4" />
+                        <Anchor point="BOTTOM" y="24" />
+                    </Anchors>
+                </ScrollFrame>
+                <EventFrame parentKey="ExtraScrollBar" inherits="MinimalScrollBar" frameStrata="HIGH">
+                    <KeyValues>
+                        <KeyValue key="hideIfUnscrollable" value="true" type="boolean" />
+                    </KeyValues>
+                    <Anchors>
+                        <Anchor point="TOPRIGHT" relativeKey="$parent.ExtraScrollBox" x="-2" />
+                        <Anchor point="BOTTOMRIGHT" relativeKey="$parent.ExtraScrollBox" x="-2" />
+                    </Anchors>
+                </EventFrame>
+            </Frames>
+            <Layers>
+                <Layer level="BACKGROUND">
+                    <Texture parentKey="DefaultBG">
+                        <Color r="0" g="0" b="0" a="0.5" />
+                        <Anchors>
+                            <Anchor point="TOPLEFT" relativeKey="$parent.DefaultScrollBox" x="-4" y="4" />
+                            <Anchor point="BOTTOMRIGHT" relativeKey="$parent.DefaultScrollBar" x="4" y="-4" />
+                        </Anchors>
+                    </Texture>
+                    <Texture parentKey="ExtraBG">
+                        <Color r="0" g="0" b="0" a="0.5" />
+                        <Anchors>
+                            <Anchor point="TOPLEFT" relativeKey="$parent.ExtraScrollBox" x="-4" y="4" />
+                            <Anchor point="BOTTOMRIGHT" relativeKey="$parent.ExtraScrollBar" x="4" y="-4" />
+                        </Anchors>
+                    </Texture>
+                </Layer>
+            </Layers>
         </Frame>
     </Frames>
 </Frame>

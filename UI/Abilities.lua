@@ -1,8 +1,36 @@
 local addonName, addon = ...
 
+local addonTitle = C_AddOns.GetAddOnTitle(addonName)
+
+addon.AbilityHeaderMixin = {}
+
+function addon.AbilityHeaderMixin:SetExpanded(expanded)
+    if expanded then
+        self.Toggle:SetAtlas("common-button-dropdown-open")
+    else
+        self.Toggle:SetAtlas("common-button-dropdown-closed")
+    end
+end
+
 addon.AbilitiesPanelMixin = {}
 
+local function LinkedSpellItemInitializer(button, elementData)
+    local info = C_Spell.GetSpellInfo(elementData)
+    button.Icon:SetTexture(info.iconID)
+    button.Icon:SetScript('OnEnter',
+        function ()
+            GameTooltip:SetOwner(button.Icon, "ANCHOR_RIGHT")
+            GameTooltip:SetSpellByID(info.spellID)
+            GameTooltip:Show()
+        end)
+    button.Icon:SetScript('OnLeave', GameTooltip_Hide)
+    button.Name:SetFormattedText('%s (%d)', info.name, info.spellID)
+end
+
 function addon.AbilitiesPanelMixin:OnLoad()
+
+    self.Title:SetText(addonTitle)
+
     local view = CreateScrollBoxListTreeListView()
     view:SetElementIndentCalculator(
         function (node)
@@ -10,7 +38,7 @@ function addon.AbilitiesPanelMixin:OnLoad()
             if data.numSpellBookItems then
                 return 0
             else
-                return 8
+                return 16
             end
         end)
     view:SetElementFactory(
@@ -24,10 +52,13 @@ function addon.AbilitiesPanelMixin:OnLoad()
                     function (button)
                         button.Text:SetTextColor(font:GetTextColor())
                         button:SetText(data.name)
+                        local expanded = data.skillLineIndex > 1 and not isOffSpec
+                        node:SetCollapsed(not expanded)
+                        button:SetExpanded(expanded)
                         button:SetScript("OnClick",
                             function ()
                                 node:ToggleCollapsed()
-                                -- button:SetCollapsedState(node:IsCollapsed())
+                                button:SetExpanded(not node:IsCollapsed())
                             end)
                     end)
             else
@@ -61,13 +92,12 @@ function addon.AbilitiesPanelMixin:OnLoad()
     ScrollUtil.InitScrollBoxListWithScrollBar(self.ScrollBox, self.ScrollBar, view)
 
     view = CreateScrollBoxListLinearView()
-    view:SetElementInitializer("ABALinkedSpellItemTemplate",
-        function (button, elementData)
-            local info = C_Spell.GetSpellInfo(elementData)
-            button.Icon:SetTexture(info.iconID)
-            button.Name:SetText(info.name)
-        end)
-    ScrollUtil.InitScrollBoxListWithScrollBar(self.Settings.ScrollBox, self.Settings.ScrollBar, view)
+    view:SetElementInitializer("ABALinkedSpellItemTemplate", LinkedSpellItemInitializer)
+    ScrollUtil.InitScrollBoxListWithScrollBar(self.Settings.DefaultScrollBox, self.Settings.DefaultScrollBar, view)
+
+    view = CreateScrollBoxListLinearView()
+    view:SetElementInitializer("ABALinkedSpellItemTemplate", LinkedSpellItemInitializer)
+    ScrollUtil.InitScrollBoxListWithScrollBar(self.Settings.ExtraScrollBox, self.Settings.ExtraScrollBar, view)
 
     self.selectionBehavior = ScrollUtil.AddSelectionBehavior(self.ScrollBox)
     self.selectionBehavior:RegisterCallback(SelectionBehaviorMixin.Event.OnSelectionChanged,
@@ -82,7 +112,19 @@ function addon.AbilitiesPanelMixin:OnLoad()
         end,
         self)
 
-    self.category = Settings.RegisterCanvasLayoutCategory(self, addonName)
+    self.Settings.Enable:HookScript('OnClick',
+        function (b)
+            local disable = b:GetChecked() == false
+            addon.db.profile.abilities[self.spellID].disable = disable
+        end)
+
+    self.Settings.EnableCDM:HookScript('OnClick',
+        function (b)
+            local disable = b:GetChecked() == false
+            addon.db.profile.abilities[self.spellID].disableCDM = disable
+        end)
+
+    self.category = Settings.RegisterCanvasLayoutCategory(self, addonTitle)
     Settings.RegisterAddOnCategory(self.category)
 
     SlashCmdList[addonName] =
@@ -95,15 +137,32 @@ end
 
 function addon.AbilitiesPanelMixin:RefreshAbility()
     local node = self.selectionBehavior:GetFirstSelectedElementData()
-    local spellID = node:GetData().actionID
-    local spellIDs = addon.GetIncludeSpellIDs(spellID, true)
+    self.spellID = node:GetData().spellID
+
+    local conf = addon.db.profile.abilities[self.spellID]
+
+    self.Settings.Enable:SetChecked(not conf.disable)
+    self.Settings.EnableCDM:SetChecked(not conf.disableCDM)
+
+    local spell = Spell:CreateFromSpellID(self.spellID)
+    spell:ContinueOnSpellLoad(
+        function ()
+            self.Settings.Name:SetText(spell:GetSpellName())
+            self.Settings.SpellID:SetText('Spell ID: ' .. spell:GetSpellID())
+            self.Settings.Description:SetText(spell:GetSpellDescription())
+        end)
+
+    local spellIDs = addon.GetLinkedSpellIDs(self.spellID, true)
     local dp = CreateDataProvider(GetKeysArray(spellIDs))
-    self.Settings.ScrollBox:SetDataProvider(dp)
+    self.Settings.DefaultScrollBox:SetDataProvider(dp)
+
+    dp = CreateDataProvider(GetKeysArray(conf.linkedSpellIDs))
+    self.Settings.ExtraScrollBox:SetDataProvider(dp)
 end
 
 local function IsAbility(node)
     local data = node:GetData()
-    return data.actionID ~= nil
+    return data.spellID ~= nil and data.skillLineIndex > 1
 end
 
 function addon.AbilitiesPanelMixin:OnShow()
@@ -120,8 +179,11 @@ function addon.AbilitiesPanelMixin:GetAbilitiesDataProvider()
 
     local dp = CreateTreeDataProvider()
 
+    -- XXX TODO Flyouts, Items?
+
     for sl = 1, C_SpellBook.GetNumSpellBookSkillLines() do
         local slInfo = C_SpellBook.GetSpellBookSkillLineInfo(sl)
+        slInfo.skillLineIndex = sl
         local category = dp:Insert(slInfo)
         for i = 1, slInfo.numSpellBookItems do
             local offset = slInfo.itemIndexOffset + i
@@ -129,6 +191,7 @@ function addon.AbilitiesPanelMixin:GetAbilitiesDataProvider()
             if info.itemType == Enum.SpellBookItemType.Spell and not info.isPassive then
                 info.index = offset
                 info.bookType = bookType
+                info.skillLineIndex = sl
                 category:Insert(info)
             end
         end

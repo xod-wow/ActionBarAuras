@@ -24,26 +24,24 @@ local function ScanLinkedSpells()
     end
 end
 
-local function AddLinkedSpellIDs(t, spellID)
+function addon.GetLinkedSpellIDs(spellID)
+    local spellIDs = { [spellID] = true }
     local name = C_Spell.GetSpellName(spellID)
-    if LinkedSpellIDs[name] then
-        Mixin(t, LinkedSpellIDs[name])
-    end
-    if addon.db.profile.abilities[spellID] then
-        Mixin(t, addon.db.profile.abilities[spellID].linkedSpellIDs)
-    end
+    Mixin(spellIDs, LinkedSpellIDs[name] or {})
+    return spellIDs
 end
 
 function addon.GetIncludeSpellIDs(spellID)
-    local spellIDs = { [spellID] = true }
 
-    AddLinkedSpellIDs(spellIDs, spellID)
+    local spellIDs = addon.GetLinkedSpellIDs(spellID)
 
     -- Base spell if it's different
     local baseSpellID = C_Spell.GetBaseSpell(spellID)
     if baseSpellID ~= spellID then
-        AddLinkedSpellIDs(spellIDs, baseSpellID)
+        Mixin(spellIDs, addon.GetLinkedSpellIDs(baseSpellID))
     end
+
+    Mixin(spellIDs, addon.db.profile.abilities[spellID].linkedSpellIDs)
 
     return spellIDs
 end
