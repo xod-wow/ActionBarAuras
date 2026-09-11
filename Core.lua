@@ -31,14 +31,28 @@ function addon.GetLinkedSpellIDs(spellID)
     return spellIDs
 end
 
+function addon.GetRaidIncludeSpellIDs(spellID)
+    local conf = addon.db.profile.abilities[spellID]
+    local spellIDs = {}
+    if conf.enableDefault then
+        Mixin(spellIDs, addon.RaidBuffsBySpellID[spellID])
+    end
+    return spellIDs
+end
+
 function addon.GetIncludeSpellIDs(spellID)
+    local conf = addon.db.profile.abilities[spellID]
 
-    local spellIDs = addon.GetLinkedSpellIDs(spellID)
+    local spellIDs = {}
 
-    -- Base spell if it's different
-    local baseSpellID = C_Spell.GetBaseSpell(spellID)
-    if baseSpellID ~= spellID then
-        Mixin(spellIDs, addon.GetLinkedSpellIDs(baseSpellID))
+    if conf.enableDefault then
+        Mixin(spellIDs, addon.GetLinkedSpellIDs(spellID))
+
+        -- Base spell if it's different
+        local baseSpellID = C_Spell.GetBaseSpell(spellID)
+        if baseSpellID ~= spellID then
+            Mixin(spellIDs, addon.GetLinkedSpellIDs(baseSpellID))
+        end
     end
 
     Mixin(spellIDs, addon.db.profile.abilities[spellID].linkedSpellIDs)
@@ -253,7 +267,7 @@ end
 
 local function ApplyRaidFilters(cf, c, spellID)
     local candidateFilters = {
-        includeSpellIDs = CopyTable(addon.RaidBuffsBySpellID[spellID])
+        includeSpellIDs = addon.GetRaidIncludeSpellIDs(spellID)
     }
     cf.addFilters(candidateFilters)
     c:SetAuraSlotFilterString("ABA", cf.filter..'|RAID')
@@ -269,6 +283,14 @@ local function ApplyFilters(cf, c, spellID)
     c:SetAuraSlotCandidateFilters("ABA", candidateFilters)
 end
 
+local function IsSpellDisabled(spellID)
+    if not spellID then
+        return true
+    else
+        return not addon.db.profile.abilities[spellID].enable
+    end
+end
+
 local function UpdateOverlayFilters(matchfunc)
     for _, cf in ipairs(AuraContainers) do
         if not matchfunc or matchfunc(cf) then
@@ -276,7 +298,7 @@ local function UpdateOverlayFilters(matchfunc)
             for name, c in pairs(cf.buttonContainers) do
                 local b = _G[name]
                 local spellID = GetActionSpellID(b.action)
-                if not canEnable or not spellID or not b:IsVisible() then
+                if not canEnable or IsSpellDisabled(spellID) or not b:IsVisible() then
                     c:SetEnabled(false)
                 elseif IsRaidBuff(spellID) then
                     if cf.includeRaidBuffs then
@@ -359,6 +381,10 @@ local function OnEvent(_, event, ...)
             UpdateOverlayFilters(cfmatchtarget)
         end
     end
+end
+
+function addon.OnOptionsChanged()
+    UpdateOverlayFilters()
 end
 
 -- PLAYER_LOGIN is too late for creating AuraContainer during restrictions

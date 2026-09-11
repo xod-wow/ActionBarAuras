@@ -14,7 +14,7 @@ end
 
 addon.AbilitiesPanelMixin = {}
 
-local function LinkedSpellItemInitializer(button, elementData)
+function addon.AbilitiesPanelMixin:SpellItemInitializer(button, elementData)
     local info = C_Spell.GetSpellInfo(elementData)
     button.Icon:SetTexture(info.iconID)
     button.Icon:SetScript('OnEnter',
@@ -25,6 +25,13 @@ local function LinkedSpellItemInitializer(button, elementData)
         end)
     button.Icon:SetScript('OnLeave', GameTooltip_Hide)
     button.Name:SetFormattedText('%s (%d)', info.name, info.spellID)
+    if button.Delete then
+        button.Delete:SetScript('OnClick',
+            function ()
+                addon.db.profile.abilities[self.spellID].linkedSpellIDs[info.spellID] = nil
+                self:RefreshAbility()
+            end)
+    end
 end
 
 function addon.AbilitiesPanelMixin:OnLoad()
@@ -89,14 +96,16 @@ function addon.AbilitiesPanelMixin:OnLoad()
         end)
 
 
+    local Initializer = function (...) self:SpellItemInitializer(...) end
+
     ScrollUtil.InitScrollBoxListWithScrollBar(self.ScrollBox, self.ScrollBar, view)
 
     view = CreateScrollBoxListLinearView()
-    view:SetElementInitializer("ABALinkedSpellItemTemplate", LinkedSpellItemInitializer)
+    view:SetElementInitializer("ABASpellItemTemplate", Initializer)
     ScrollUtil.InitScrollBoxListWithScrollBar(self.Settings.DefaultScrollBox, self.Settings.DefaultScrollBar, view)
 
     view = CreateScrollBoxListLinearView()
-    view:SetElementInitializer("ABALinkedSpellItemTemplate", LinkedSpellItemInitializer)
+    view:SetElementInitializer("ABASpellItemDeleteTemplate", Initializer)
     ScrollUtil.InitScrollBoxListWithScrollBar(self.Settings.ExtraScrollBox, self.Settings.ExtraScrollBar, view)
 
     self.selectionBehavior = ScrollUtil.AddSelectionBehavior(self.ScrollBox)
@@ -114,14 +123,16 @@ function addon.AbilitiesPanelMixin:OnLoad()
 
     self.Settings.Enable:HookScript('OnClick',
         function (b)
-            local disable = b:GetChecked() == false
-            addon.db.profile.abilities[self.spellID].disable = disable
+            local enable = b:GetChecked() == true
+            addon.db.profile.abilities[self.spellID].enable = enable
+            addon.OnOptionsChanged()
         end)
 
-    self.Settings.EnableCDM:HookScript('OnClick',
+    self.Settings.EnableDefault:HookScript('OnClick',
         function (b)
-            local disable = b:GetChecked() == false
-            addon.db.profile.abilities[self.spellID].disableCDM = disable
+            local disable = b:GetChecked() == true
+            addon.db.profile.abilities[self.spellID].enableDefault = enable
+            addon.OnOptionsChanged()
         end)
 
     self.category = Settings.RegisterCanvasLayoutCategory(self, addonTitle)
@@ -141,15 +152,14 @@ function addon.AbilitiesPanelMixin:RefreshAbility()
 
     local conf = addon.db.profile.abilities[self.spellID]
 
-    self.Settings.Enable:SetChecked(not conf.disable)
-    self.Settings.EnableCDM:SetChecked(not conf.disableCDM)
+    self.Settings.Enable:SetChecked(conf.enable)
+    self.Settings.EnableDefault:SetChecked(conf.enableDefault)
 
     local spell = Spell:CreateFromSpellID(self.spellID)
     spell:ContinueOnSpellLoad(
         function ()
             self.Settings.Name:SetText(spell:GetSpellName())
-            self.Settings.SpellID:SetText('Spell ID: ' .. spell:GetSpellID())
-            self.Settings.Description:SetText(spell:GetSpellDescription())
+            self.Settings.SpellID:SetText('ID: ' .. spell:GetSpellID())
         end)
 
     local spellIDs = addon.GetLinkedSpellIDs(self.spellID, true)

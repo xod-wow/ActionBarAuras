@@ -10,15 +10,15 @@ local _, addon = ...
 -- local fontPath, fontSize, fontFlags = NumberFontNormal:GetFont()
 
 local DefaultAbility = {
-    disable = false,
-    disableCDM = false,
+    enable = true,
+    enableDefault = true,
     linkedSpellIDs = { },
 }
 
 local defaults = {
     profile = {
         overlay = {
-            enabled = true,
+            enable = true,
             texture = [[Interface\AddOns\ActionBarAuras\Textures\Overlay]],
             color = {
                 buff    = { r=0.00, g=0.70, b=0.00, a=0.50 },
@@ -26,23 +26,27 @@ local defaults = {
             },
         },
         duration = {
-            enabled = true,
+            enable = true,
             font = "NumberFontNormal",
             anchor = { point="BOTTOMLEFT", x=3, y=3 },
         },
         stacks = {
-            enabled = true,
+            enable = true,
             font = "NumberFontNormal",
             anchor = { point="TOPLEFT", x=3, y=-3 },
         },
         abilities = {
             ['*'] = DefaultAbility,
             [100784] = {
+                enable = true,
+                enableDefault = true,
                 linkedSpellIDs = {
                     [202090] = true
                 }
             },
             [30455] = {
+                enable = true,
+                enableDefault = true,
                 linkedSpellIDs = {
                     [1221389] = true
                 }
