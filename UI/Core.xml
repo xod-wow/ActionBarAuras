@@ -1,0 +1,38 @@
+<Ui>
+
+<Script file="Core.lua" />
+
+<Frame name="ABACorePanel" hidden="true">
+    <Mixins>
+        <Mixin key="CorePanelMixin" source="local" />
+    </Mixins>
+
+    <Scripts>
+        <OnLoad method="OnLoad" />
+        <OnShow method="OnShow" />
+    </Scripts>
+
+    <Layers>
+        <Layer level="ARTWORK">
+            <FontString parentKey="Title" inherits="GameFontHighlightHuge" justifyH="LEFT">
+                <Anchors>
+                    <Anchor point="TOPLEFT" x="7" y="-22" />
+                </Anchors>
+            </FontString>
+            <Texture atlas="Options_HorizontalDivider" useAtlasSize="true">
+                <Anchors>
+                    <Anchor point="TOP" y="-50"/>
+                </Anchors>
+            </Texture>
+            <FontString inherits="GameFontNormalMed2" text="Nothing here (yet)">
+                <Color r="0.5" g="1" b="0.5" />
+                <Anchors>
+                    <Anchor point="CENTER" />
+                </Anchors>
+            </FontString>
+        </Layer>
+    </Layers>
+
+</Frame>
+
+</Ui>

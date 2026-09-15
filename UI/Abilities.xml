@@ -81,6 +81,11 @@
                 </Anchors>
             </FontString>
         </Layer>
+        <Layer level="BACKGROUND">
+            <Texture setAllPoints="true" parentKey="Stripe" hidden="true">
+                <Color r="0.2" g="0.2" b="0.2" a="0.33" />
+            </Texture>
+        </Layer>
     </Layers>
 </Button>
 
@@ -107,7 +112,7 @@
 
     <Layers>
         <Layer level="ARTWORK">
-            <FontString parentKey="Title" inherits="GameFontHighlightHuge" justifyH="LEFT" text="ActionBarAuras">
+            <FontString parentKey="Title" inherits="GameFontHighlightHuge" justifyH="LEFT">
                 <Anchors>
                     <Anchor point="TOPLEFT" x="7" y="-22" />
                 </Anchors>
@@ -194,7 +199,7 @@
                     <Size y="130" />
                     <Anchors>
                         <Anchor point="TOPLEFT" relativeKey="$parent.DefaultHeader" relativePoint="BOTTOMLEFT" y="-12" x="8" />
-                        <Anchor point="RIGHT" relativeKey="$parent.Name" x="-4" />
+                        <Anchor point="RIGHT" relativeKey="$parent.Name" x="-20" />
                     </Anchors>
                 </ScrollFrame>
                 <EventFrame parentKey="DefaultScrollBar" inherits="MinimalScrollBar" frameStrata="HIGH">
@@ -202,8 +207,8 @@
                         <KeyValue key="hideIfUnscrollable" value="true" type="boolean" />
                     </KeyValues>
                     <Anchors>
-                        <Anchor point="TOPRIGHT" relativeKey="$parent.DefaultScrollBox" x="-2" />
-                        <Anchor point="BOTTOMRIGHT" relativeKey="$parent.DefaultScrollBox" x="-2" />
+                        <Anchor point="TOPLEFT" relativePoint="TOPRIGHT" relativeKey="$parent.DefaultScrollBox" x="10" />
+                        <Anchor point="BOTTOM" relativeKey="$parent.DefaultScrollBox" />
                     </Anchors>
                 </EventFrame>
             </Frames>
@@ -223,7 +228,7 @@
                     <Size y="156" />
                     <Anchors>
                         <Anchor point="TOPLEFT" relativeKey="$parent.ExtraHeader" relativePoint="BOTTOMLEFT" y="-12" x="8" />
-                        <Anchor point="RIGHT" relativeKey="$parent.Name" x="-4" />
+                        <Anchor point="RIGHT" relativeKey="$parent.Name" x="-20" />
                     </Anchors>
                 </ScrollFrame>
                 <EventFrame parentKey="ExtraScrollBar" inherits="MinimalScrollBar" frameStrata="HIGH">
@@ -231,8 +236,8 @@
                         <KeyValue key="hideIfUnscrollable" value="true" type="boolean" />
                     </KeyValues>
                     <Anchors>
-                        <Anchor point="TOPRIGHT" relativeKey="$parent.ExtraScrollBox" x="-2" />
-                        <Anchor point="BOTTOMRIGHT" relativeKey="$parent.ExtraScrollBox" x="-2" />
+                        <Anchor point="TOPLEFT" relativePoint="TOPRIGHT" relativeKey="$parent.ExtraScrollBox" x="10" />
+                        <Anchor point="BOTTOM" relativeKey="$parent.ExtraScrollBox" />
                     </Anchors>
                 </EventFrame>
                 <Button parentKey="AddButton" inherits="UIPanelButtonTemplate" text="ADD">
@@ -263,14 +268,14 @@
                         <Color r="0" g="0" b="0" a="0.5" />
                         <Anchors>
                             <Anchor point="TOPLEFT" relativeKey="$parent.DefaultScrollBox" x="-4" y="4" />
-                            <Anchor point="BOTTOMRIGHT" relativeKey="$parent.DefaultScrollBar" x="4" y="-4" />
+                            <Anchor point="BOTTOMRIGHT" relativeKey="$parent.DefaultScrollBox" x="4" y="-4" />
                         </Anchors>
                     </Texture>
                     <Texture parentKey="ExtraBG">
                         <Color r="0" g="0" b="0" a="0.5" />
                         <Anchors>
                             <Anchor point="TOPLEFT" relativeKey="$parent.ExtraScrollBox" x="-4" y="4" />
-                            <Anchor point="BOTTOMRIGHT" relativeKey="$parent.ExtraScrollBar" x="4" y="-4" />
+                            <Anchor point="BOTTOMRIGHT" relativeKey="$parent.ExtraScrollBox" x="4" y="-4" />
                         </Anchors>
                     </Texture>
                 </Layer>

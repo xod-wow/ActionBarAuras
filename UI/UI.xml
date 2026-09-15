@@ -1,3 +1,4 @@
 <Ui>
+    <Include file="Core.xml" />
     <Include file="Abilities.xml" />
 </Ui>

@@ -37,20 +37,6 @@ local defaults = {
         },
         abilities = {
             ['*'] = DefaultAbility,
-            [100784] = {
-                enable = true,
-                enableDefault = true,
-                linkedSpellIDs = {
-                    [202090] = true
-                }
-            },
-            [30455] = {
-                enable = true,
-                enableDefault = true,
-                linkedSpellIDs = {
-                    [1221389] = true
-                }
-            },
         }
     },
 }

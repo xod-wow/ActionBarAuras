@@ -1,7 +1,5 @@
 local addonName, addon = ...
 
-local addonTitle = C_AddOns.GetAddOnTitle(addonName)
-
 addon.AbilityHeaderMixin = {}
 
 function addon.AbilityHeaderMixin:SetExpanded(expanded)
@@ -36,7 +34,7 @@ end
 
 function addon.AbilitiesPanelMixin:OnLoad()
 
-    self.Title:SetText(addonTitle)
+    self.Title:SetText("Abilities")
 
     local view = CreateScrollBoxListTreeListView()
     view:SetElementIndentCalculator(
@@ -99,13 +97,17 @@ function addon.AbilitiesPanelMixin:OnLoad()
 
     ScrollUtil.InitScrollBoxListWithScrollBar(self.ScrollBox, self.ScrollBar, view)
 
+    local function ShowStripe(f, isShown) f.Stripe:SetShown(isShown) end
+
     view = CreateScrollBoxListLinearView()
     view:SetElementInitializer("ABASpellItemTemplate", Initializer)
     ScrollUtil.InitScrollBoxListWithScrollBar(self.Settings.DefaultScrollBox, self.Settings.DefaultScrollBar, view)
+    ScrollUtil.RegisterAlternateRowBehavior(self.Settings.DefaultScrollBox, ShowStripe)
 
     view = CreateScrollBoxListLinearView()
     view:SetElementInitializer("ABASpellItemDeleteTemplate", Initializer)
     ScrollUtil.InitScrollBoxListWithScrollBar(self.Settings.ExtraScrollBox, self.Settings.ExtraScrollBar, view)
+    ScrollUtil.RegisterAlternateRowBehavior(self.Settings.ExtraScrollBox, ShowStripe)
 
     self.selectionBehavior = ScrollUtil.AddSelectionBehavior(self.ScrollBox)
     self.selectionBehavior:RegisterCallback(SelectionBehaviorMixin.Event.OnSelectionChanged,
@@ -134,15 +136,23 @@ function addon.AbilitiesPanelMixin:OnLoad()
             addon.OnOptionsChanged()
         end)
 
-    self.category = Settings.RegisterCanvasLayoutCategory(self, addonTitle)
-    Settings.RegisterAddOnCategory(self.category)
+    self.Settings.AddSpell:SetScript('OnTextChanged',
+        function (editBox)
+            self:CheckAddSpell(editBox:GetText())
+        end)
 
-    SlashCmdList[addonName] =
-        function ()
-            SettingsPanel:Open()
-            SettingsPanel:SelectCategory(self.category, true)
-        end
-    _G["SLASH_"..addonName.."1"] = "/aba"
+    self.category = Settings.RegisterCanvasLayoutSubcategory(addon.category, self, "Abilities")
+end
+
+function addon.AbilitiesPanelMixin:GetAddSpellID()
+    local spellIdentifier = self.Settings.AddSpell:GetText()
+    local info = C_Spell.GetSpellInfo(spellIdentifier or 0)
+    if info then return info.spellID end
+end
+
+function addon.AbilitiesPanelMixin:CheckAddSpell()
+    local spellID = self:GetAddSpellID()
+    self.Settings.AddButton:SetEnabled(spellID ~= nil)
 end
 
 function addon.AbilitiesPanelMixin:RefreshAbility()
@@ -158,7 +168,7 @@ function addon.AbilitiesPanelMixin:RefreshAbility()
     spell:ContinueOnSpellLoad(
         function ()
             self.Settings.Name:SetText(spell:GetSpellName())
-            self.Settings.SpellID:SetText('ID: ' .. spell:GetSpellID())
+            self.Settings.SpellID:SetText('Spell ID: ' .. spell:GetSpellID())
         end)
 
     local spellIDs = addon.GetLinkedSpellIDs(self.spellID, true)
@@ -167,6 +177,16 @@ function addon.AbilitiesPanelMixin:RefreshAbility()
 
     dp = CreateDataProvider(GetKeysArray(conf.linkedSpellIDs))
     self.Settings.ExtraScrollBox:SetDataProvider(dp)
+
+    self.Settings.AddSpell:SetText("")
+    self.Settings.AddButton:SetScript('OnClick',
+        function ()
+            local spellID = self:GetAddSpellID()
+            if spellID then
+                addon.db.profile.abilities[self.spellID].linkedSpellIDs[spellID] = true
+                self:RefreshAbility()
+            end
+        end)
 end
 
 local function IsAbility(node)
