@@ -52,20 +52,19 @@ function addon.AbilitiesPanelMixin:OnLoad()
         function (factory, node)
             local data = node:GetData()
             local specID = PlayerUtil.GetCurrentSpecID()
-            local isOffSpec = data.isOffSpec or (data.specID ~= nil and data.specID ~= specID)
-            local font = isOffSpec and GameFontWhite or GameFontNormal
+            local font = data.isOffSpec and GameFontWhite or GameFontNormal
             if data.numSpellBookItems then
                 factory("ABAAbilityHeaderTemplate",
                     function (button)
                         button.Text:SetTextColor(font:GetTextColor())
                         button:SetText(data.name)
-                        local expanded = data.skillLineIndex > 1 and not isOffSpec
-                        node:SetCollapsed(not expanded)
-                        button:SetExpanded(expanded)
+                        node:SetCollapsed(not data.expanded)
+                        button:SetExpanded(data.expanded)
                         button:SetScript("OnClick",
                             function ()
                                 node:ToggleCollapsed()
-                                button:SetExpanded(not node:IsCollapsed())
+                                data.expanded = not node:IsCollapsed()
+                                button:SetExpanded(data.expanded)
                             end)
                     end)
             else
@@ -194,6 +193,8 @@ function addon.AbilitiesPanelMixin:GetAbilitiesDataProvider()
     for sl = 1, C_SpellBook.GetNumSpellBookSkillLines() do
         local slInfo = C_SpellBook.GetSpellBookSkillLineInfo(sl)
         slInfo.skillLineIndex = sl
+        slInfo.isOffSpec = slInfo.offSpecID ~= nil
+        slInfo.expanded = sl > 1 and not slInfo.isOffSpec
         local category = dp:Insert(slInfo)
         for i = 1, slInfo.numSpellBookItems do
             local offset = slInfo.itemIndexOffset + i
