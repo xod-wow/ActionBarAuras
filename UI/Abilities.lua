@@ -201,7 +201,7 @@ function addon.AbilitiesPanelMixin:GetAbilitiesDataProvider()
             if info.itemType == Enum.SpellBookItemType.Spell and not info.isPassive then
                 info.skillLineIndex = sl
                 category:Insert(info)
-            elseif info.itemType == Enum.SpellBookItemType.Flyout then
+            elseif sl > 1 and info.itemType == Enum.SpellBookItemType.Flyout then
                 local _, _, slots, isKnown = GetFlyoutInfo(info.actionID)
                 for i = 1, slots do
                     local spellID, overrideSpellID, isKnown, name = GetFlyoutSlotInfo(info.actionID, i)
