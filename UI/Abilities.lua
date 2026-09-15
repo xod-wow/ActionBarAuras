@@ -79,7 +79,7 @@ function addon.AbilitiesPanelMixin:OnLoad()
                         button.Icon:SetScript('OnEnter',
                             function (f)
                                 GameTooltip:SetOwner(f, "ANCHOR_RIGHT")
-                                GameTooltip:SetSpellBookItem(data.index, data.bookType)
+                                GameTooltip:SetSpellByID(data.actionID)
                                 GameTooltip:Show()
                             end)
                         button.Icon:SetScript('OnLeave', GameTooltip_Hide)
@@ -199,10 +199,25 @@ function addon.AbilitiesPanelMixin:GetAbilitiesDataProvider()
             local offset = slInfo.itemIndexOffset + i
             local info = C_SpellBook.GetSpellBookItemInfo(offset, bookType)
             if info.itemType == Enum.SpellBookItemType.Spell and not info.isPassive then
-                info.index = offset
-                info.bookType = bookType
                 info.skillLineIndex = sl
                 category:Insert(info)
+            elseif info.itemType == Enum.SpellBookItemType.Flyout then
+                local _, _, slots, isKnown = GetFlyoutInfo(info.actionID)
+                for i = 1, slots do
+                    local spellID, overrideSpellID, isKnown, name = GetFlyoutSlotInfo(info.actionID, i)
+                    local iconID = C_Spell.GetSpellTexture(spellID)
+                    if isKnown then
+                        local info = {
+                            skillLineIndex = sl,
+                            actionID = spellID,
+                            spellID = overrideSpellID,
+                            isOffspec = false,
+                            name = name,
+                            iconID = iconID
+                        }
+                        category:Insert(info)
+                    end
+                end
             end
         end
     end

@@ -239,15 +239,6 @@
                     <Anchors>
                         <Anchor point="TOPRIGHT" relativeKey="$parent.ExtraScrollBox" relativePoint="BOTTOMRIGHT" x="-8" y="-8" />
                     </Anchors>
-                    <Layers>
-                        <Layer level="ARTWORK">
-                            <FontString inherits="GameFontHighlight" text="Spell ID">
-                                <Anchors>
-                                    <Anchor point="RIGHT" relativePoint="LEFT" x="-6" />
-                                </Anchors>
-                            </FontString>
-                        </Layer>
-                    </Layers>
                 </Button>
                 <EditBox autoFocus="false" inherits="InputBoxTemplate" parentKey="AddSpell">
                     <Size x="140" y="20"/>
@@ -255,13 +246,15 @@
                         <Anchor point="RIGHT" relativeKey="$parent.AddButton" relativePoint="LEFT" x="-4" y="1" />
                     </Anchors>
                     <FontString inherits="ChatFontNormal" justifyH="LEFT"/>
-<!--
-                    <Scripts>
-                        <OnEnter>self:GetParent():OnEnter()</OnEnter>
-                        <OnLeave>self:GetParent():OnLeave()</OnLeave>
-                      <OnEscapePressed>self:ClearFocus()</OnEscapePressed>
-                    </Scripts>
--->
+                    <Layers>
+                        <Layer level="ARTWORK">
+                            <FontString inherits="GameFontNormal" justifyH="RIGHT" text="Spell ID">
+                                <Anchors>
+                                    <Anchor point="RIGHT" relativePoint="LEFT" x="-8" y="-1" />
+                                </Anchors>
+                            </FontString>
+                        </Layer>
+                    </Layers>
                 </EditBox>
             </Frames>
             <Layers>
@@ -287,4 +280,3 @@
 </Frame>
 
 </Ui>
-
