@@ -119,7 +119,7 @@ end
 
 local AuraContainers = {
     {
-        filter = 'HELPFUL',
+        filter = 'HELPFUL|INCLUDE_NAME_PLATE_ONLY',
         unit = 'player',
         color = CreateColor(0, 0.7, 0, 0.5),
         templateNames = { 'ABAOverlayAuraTemplate' },
