@@ -1,4 +1,4 @@
-## Interface: 120100
+## Interface: 120100, 16001
 ## Title: ActionBar Auras
 ## IconTexture: Interface\Icons\ability_deathknight_heartstopaura
 ## Version: @project-version@
