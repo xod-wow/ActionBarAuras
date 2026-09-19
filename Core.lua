@@ -7,6 +7,11 @@ local _, addon = ...
 
 local LinkedSpellIDs = { }
 
+local function AddLinkedSpell(name, linkedSpellID)
+    LinkedSpellIDs[name] = LinkedSpellIDs[name] or {}
+    LinkedSpellIDs[name][linkedSpellID] = true
+end
+
 -- TODO equipped items without spellID?
 local function ScanLinkedSpells()
     for c = Enum.CooldownViewerCategoryMeta.MinValue, Enum.CooldownViewerCategoryMeta.MaxValue do
@@ -14,10 +19,14 @@ local function ScanLinkedSpells()
             local info = C_CooldownViewer.GetCooldownViewerCooldownInfo(cooldownID)
             if info.spellID then
                 local name = C_Spell.GetSpellName(info.spellID)
-                LinkedSpellIDs[name] = LinkedSpellIDs[name] or {}
-                LinkedSpellIDs[name][info.spellID] = true
+                AddLinkedSpell(name, info.spellID)
                 for _, spellID in ipairs(info.linkedSpellIDs) do
-                    LinkedSpellIDs[name][spellID] = true
+                    AddLinkedSpell(name, spellID)
+                    -- Also attach linked spells to anything with the same name.
+                    -- E.g., the Whirlwind buff is attached to Improved Whirlwind
+                    -- in the CDM but attach it to Whirlwind.
+                    local linkedName = C_Spell.GetSpellName(spellID)
+                    AddLinkedSpell(linkedName, spellID)
                 end
             end
         end
