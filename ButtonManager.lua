@@ -38,7 +38,7 @@ end
 
 --[[--------------------------------------------------------------------------]]--
 
-local AuraContainers = {
+local FilterDefinitions = {
     {
         name = 'PLAYERBUFF',
         filter = 'HELPFUL|INCLUDE_NAME_PLATE_ONLY',
@@ -128,21 +128,18 @@ local function IsRaidBuff(spellID)
     return addon.RaidBuffsBySpellID[spellID] ~= nil
 end
 
-local function ApplyRaidFilters(cm, spellID)
-    local candidateFilters = {
-        includeSpellIDs = addon.GetRaidIncludeSpellIDs(spellID)
-    }
-    cm.cf.addFilters(candidateFilters)
-    cm.c:SetAuraSlotFilterString("ABA", cm.cf.filter..'|RAID')
-    cm.c:SetAuraSlotCandidateFilters("ABA", candidateFilters)
-end
+local function ApplyFilters(cm, spellID, isRaidBuff)
+    local candidateFilters, filter = {}
+    if isRaidBuff then
+        candidateFilters.includeSpellIDs = addon.GetRaidIncludeSpellIDs(spellID)
+        filter = cm.cf.filter..'|RAID'
+    else
+        candidateFilters.includeSpellIDs = addon.GetIncludeSpellIDs(spellID)
+        filter = cm.cf.filter..'|PLAYER'
+    end
 
-local function ApplyFilters(cm, spellID)
-    local candidateFilters = {
-        includeSpellIDs = addon.GetIncludeSpellIDs(spellID)
-    }
     cm.cf.addFilters(candidateFilters)
-    cm.c:SetAuraSlotFilterString("ABA", cm.cf.filter..'|PLAYER')
+    cm.c:SetAuraSlotFilterString("ABA", filter)
     cm.c:SetAuraSlotCandidateFilters("ABA", candidateFilters)
 end
 
@@ -154,12 +151,15 @@ local function IsSpellDisabled(spellID)
     end
 end
 
+
+--[[--------------------------------------------------------------------------]]--
+
 addon.ButtonManagerMixin = {}
 
 function addon.ButtonManagerMixin:Initialize(button)
     self.button = button
     self.controllers = {}
-    for _, cf in ipairs(AuraContainers) do
+    for _, cf in ipairs(FilterDefinitions) do
         local c = CreateFrame('AuraContainer', nil, button, 'CustomAuraContainerTemplate')
         c:SetPoint("TOPLEFT")
         c:SetUnit(cf.unit)
@@ -179,11 +179,8 @@ function addon.ButtonManagerMixin:UpdateFilters(matchfunc)
                 cm.c:SetEnabled(false)
             elseif isRaidBuff and not cm.cf.includeRaidBuffs then
                 cm.c:SetEnabled(false)
-            elseif isRaidBuff then
-                ApplyRaidFilters(cm, spellID)
-                cm.c:SetEnabled(true)
             else
-                ApplyFilters(cm, spellID)
+                ApplyFilters(cm, spellID, isRaidBuff)
                 cm.c:SetEnabled(true)
             end
         end
