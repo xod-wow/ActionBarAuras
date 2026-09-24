@@ -68,7 +68,6 @@ function addon.AbilitiesPanelMixin:OnLoad()
             else
                 factory("ABAAbilityItemTemplate",
                     function (button)
-                        local data = node:GetData()
                         local isSelected = self.selectionBehavior:IsSelected(button)
                         button.SelectedTexture:SetShown(isSelected)
                         button.Icon:SetTexture(data.iconID)
@@ -82,7 +81,7 @@ function addon.AbilitiesPanelMixin:OnLoad()
                         button.Icon:SetScript('OnLeave', GameTooltip_Hide)
                         button.Name:SetTextColor(font:GetTextColor())
                         button.Name:SetText(data.name)
-                        button:SetAlpha(isOffSpec and 0.67 or 1)
+                        button:SetAlpha(data.isOffSpec and 0.67 or 1)
                         button:SetScript('OnClick',
                             function ()
                                 self.selectionBehavior:Select(button)
@@ -116,7 +115,7 @@ function addon.AbilitiesPanelMixin:OnLoad()
             if button then
                 button.SelectedTexture:SetShown(isSelected)
             end
-            if selected then
+            if isSelected then
                 self.ScrollBox:ScrollToElementData(node, ScrollBoxConstants.AlignNearest);
             end
         end,
@@ -131,7 +130,7 @@ function addon.AbilitiesPanelMixin:OnLoad()
 
     self.Settings.EnableDefault:HookScript('OnClick',
         function (b)
-            local disable = b:GetChecked() == true
+            local enable = b:GetChecked() == true
             addon.db.profile.abilities[self.spellID].enableDefault = enable
             addon.OnOptionsChanged()
         end)
@@ -216,19 +215,19 @@ function addon.AbilitiesPanelMixin:GetAbilitiesDataProvider()
         slInfo.isOffSpec = slInfo.offSpecID ~= nil
         slInfo.expanded = sl > 1 and not slInfo.isOffSpec
         local category = dp:Insert(slInfo)
-        for i = 1, slInfo.numSpellBookItems do
-            local offset = slInfo.itemIndexOffset + i
+        for itemIndex = 1, slInfo.numSpellBookItems do
+            local offset = slInfo.itemIndexOffset + itemIndex
             local info = C_SpellBook.GetSpellBookItemInfo(offset, bookType)
             if info.itemType == Enum.SpellBookItemType.Spell and not info.isPassive then
                 info.skillLineIndex = sl
                 category:Insert(info)
             elseif sl > 1 and info.itemType == Enum.SpellBookItemType.Flyout then
-                local _, _, slots, isKnown = GetFlyoutInfo(info.actionID)
-                for i = 1, slots do
+                local _, _, numSlots = GetFlyoutInfo(info.actionID)
+                for i = 1, numSlots do
                     local spellID, overrideSpellID, isKnown, name = GetFlyoutSlotInfo(info.actionID, i)
                     local iconID = C_Spell.GetSpellTexture(spellID)
                     if isKnown then
-                        local info = {
+                        local data = {
                             skillLineIndex = sl,
                             actionID = spellID,
                             spellID = overrideSpellID,
@@ -236,7 +235,7 @@ function addon.AbilitiesPanelMixin:GetAbilitiesDataProvider()
                             name = name,
                             iconID = iconID
                         }
-                        category:Insert(info)
+                        category:Insert(data)
                     end
                 end
             end
