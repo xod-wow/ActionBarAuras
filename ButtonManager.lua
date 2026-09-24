@@ -82,7 +82,13 @@ local FilterDefinitions = {
 ]]
 }
 
-local function CreateButtonAuraSlot(cf, container, button)
+
+--[[--------------------------------------------------------------------------]]--
+
+local AuraContainerManagerMixin = {}
+
+function AuraContainerManagerMixin:CreateAuraSlot()
+    local cf = self.cf
     local options = {
         sortMethod = AuraContainerSortMethod.ExpirationOnly,
         sortDirection = AuraContainerSortDirection.Reverse,
@@ -90,24 +96,41 @@ local function CreateButtonAuraSlot(cf, container, button)
         initializeFrame = cf.initializeFrame and function (f) cf.initializeFrame(f, cf) end
     }
     local auraSlotFilter = cf.filter .. '|PLAYER'
-    local as = container:AddAuraSlot("ABA", auraSlotFilter, options)
-    PixelUtil.SetSize(as, button:GetSize())
-    as:SetPoint("CENTER", button)
-    as:SetFrameLevel(button.cooldown:GetFrameLevel()+1)
+    self.as = self.c:AddAuraSlot("ABA", auraSlotFilter, options)
+    PixelUtil.SetSize(self.as, self.button:GetSize())
+    self.as:SetPoint("CENTER", self.button)
+    self.as:SetFrameLevel(self.button.cooldown:GetFrameLevel()+1)
 end
 
-local function CanEnable(cf)
-    local canAssist = UnitCanAssist('player', cf.unit, true, true)
-    if cf.filter == 'HARMFUL' and canAssist then
-        return false
-    elseif cf.filter == 'HELPFUL' and not canAssist then
-        return false
+function AuraContainerManagerMixin:Initialize(cf, button)
+    self.cf = cf
+    self.button = button
+    self.c = CreateFrame('AuraContainer', nil, button, 'CustomAuraContainerTemplate')
+    self.c:SetPoint("TOPLEFT")
+    self.c:SetUnit(cf.unit)
+    self:CreateAuraSlot()
+end
+
+function AuraContainerManagerMixin:ApplyFilters(spellID, isRaidBuff)
+    local candidateFilters, filter = {}
+    if isRaidBuff then
+        candidateFilters.includeSpellIDs = addon.GetRaidIncludeSpellIDs(spellID)
+        filter = self.cf.filter..'|RAID'
     else
-        return true
+        candidateFilters.includeSpellIDs = addon.GetIncludeSpellIDs(spellID)
+        filter = self.cf.filter..'|PLAYER'
     end
+    self.cf.addFilters(candidateFilters)
+    self.c:SetAuraSlotFilterString("ABA", filter)
+    self.c:SetAuraSlotCandidateFilters("ABA", candidateFilters)
 end
 
-local function GetActionSpellID(actionID)
+function AuraContainerManagerMixin:GetActionID()
+    return self.button.action
+end
+
+function AuraContainerManagerMixin:GetActionSpellID()
+    local actionID = self:GetActionID()
     local actionType, id, actionSubType = GetActionInfo(actionID)
     if (actionType =="spell" or actionSubType == "spell") and id then
         return id
@@ -124,25 +147,6 @@ local function GetActionSpellID(actionID)
     end
 end
 
-local function IsRaidBuff(spellID)
-    return addon.RaidBuffsBySpellID[spellID] ~= nil
-end
-
-local function ApplyFilters(cm, spellID, isRaidBuff)
-    local candidateFilters, filter = {}
-    if isRaidBuff then
-        candidateFilters.includeSpellIDs = addon.GetRaidIncludeSpellIDs(spellID)
-        filter = cm.cf.filter..'|RAID'
-    else
-        candidateFilters.includeSpellIDs = addon.GetIncludeSpellIDs(spellID)
-        filter = cm.cf.filter..'|PLAYER'
-    end
-
-    cm.cf.addFilters(candidateFilters)
-    cm.c:SetAuraSlotFilterString("ABA", filter)
-    cm.c:SetAuraSlotCandidateFilters("ABA", candidateFilters)
-end
-
 local function IsSpellDisabled(spellID)
     if not spellID then
         return true
@@ -151,50 +155,72 @@ local function IsSpellDisabled(spellID)
     end
 end
 
+function AuraContainerManagerMixin:ShouldDisable(spellID, isRaidBuff)
+    if not self.button:IsVisible() then
+        return true
+    elseif IsSpellDisabled(spellID) then
+        return true
+    elseif isRaidBuff and not self.cf.includeRaidBuffs then
+        return true
+    end
+    local canAssist = UnitCanAssist('player', self.cf.unit, true, true)
+    if self.cf.filter == 'HARMFUL' and canAssist then
+        return true
+    elseif self.cf.filter == 'HELPFUL' and not canAssist then
+        return true
+    else
+        return false
+    end
+end
+
+local function IsRaidBuff(spellID)
+    return addon.RaidBuffsBySpellID[spellID] ~= nil
+end
+
+function AuraContainerManagerMixin:UpdateFilters()
+    local spellID = self:GetActionSpellID()
+    local function debug(...) if spellID == 1459 then print(...) end end
+    local isRaidBuff = IsRaidBuff(spellID)
+    if self:ShouldDisable(spellID, isRaidBuff) then
+        self.c:SetEnabled(false)
+    else
+        self:ApplyFilters(spellID, isRaidBuff)
+        self.c:SetEnabled(true)
+    end
+end
+
+local function CreateAuraContainerManager(cf, button)
+    local acm = CreateFromMixins(AuraContainerManagerMixin)
+    acm:Initialize(cf, button)
+    return acm
+end
+
 
 --[[--------------------------------------------------------------------------]]--
 
 addon.ButtonManagerMixin = {}
 
 function addon.ButtonManagerMixin:Initialize(button)
-    self.button = button
-    self.controllers = {}
+    self.acm = {}
     for _, cf in ipairs(FilterDefinitions) do
-        local c = CreateFrame('AuraContainer', nil, button, 'CustomAuraContainerTemplate')
-        c:SetPoint("TOPLEFT")
-        c:SetUnit(cf.unit)
-        local as = CreateButtonAuraSlot(cf, c, button)
-        self.controllers[cf.name] = { cf=cf, c=c, as=as }
+        self.acm[cf.name] = CreateAuraContainerManager(cf, button)
     end
 end
 
-function addon.ButtonManagerMixin:UpdateFilters(matchfunc)
-    local b = self.button
-    local spellID = GetActionSpellID(b.action)
-    local isRaidBuff = IsRaidBuff(spellID)
-    local isDisabled = IsSpellDisabled(spellID) or not b:IsVisible()
-    for _, cm in pairs(self.controllers) do
-        if not matchfunc or matchfunc(cm.cf) then
-            if isDisabled or not CanEnable(cm.cf) then
-                cm.c:SetEnabled(false)
-            elseif isRaidBuff and not cm.cf.includeRaidBuffs then
-                cm.c:SetEnabled(false)
-            else
-                ApplyFilters(cm, spellID, isRaidBuff)
-                cm.c:SetEnabled(true)
-            end
-        end
+function addon.ButtonManagerMixin:UpdateFilters()
+    for _, cm in pairs(self.acm) do
+        cm:UpdateFilters()
     end
 end
 
 function addon.ButtonManagerMixin:Hide()
-    for _, cm in pairs(bm.controllers) do
+    for _, cm in pairs(self.acm) do
         cm.c:Hide()
     end
 end
 
 function addon.ButtonManagerMixin:Show()
-    for _, cm in pairs(self.controllers) do
+    for _, cm in pairs(self.acm) do
         cm.c:Show()
     end
 end

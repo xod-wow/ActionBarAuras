@@ -96,9 +96,9 @@ function Controller:CreateButtonManagers()
     end
 end
 
-function Controller:UpdateOverlayFilters(matchfunc)
+function Controller:UpdateOverlayFilters()
     for _, buttonManager in pairs(self.buttonManagers) do
-        buttonManager:UpdateFilters(matchfunc)
+        buttonManager:UpdateFilters()
     end
 end
 
@@ -112,7 +112,6 @@ function Controller:Initialize()
 end
 
 function Controller:OnEvent(event, ...)
-    local function matchtarget(cf) return cf.unit == 'target' end
     if event == 'PLAYER_LOGIN' then
         self:Initialize()
     elseif UpdateFiltersEvents[event] then
@@ -121,13 +120,13 @@ function Controller:OnEvent(event, ...)
         addon.ScanLinkedSpells()
         self:UpdateOverlayFilters()
     elseif event == 'PLAYER_TARGET_CHANGED' then
-        self:UpdateOverlayFilters(matchtarget)
+        self:UpdateOverlayFilters()
     elseif event == 'UNIT_FACTION' then
         -- Maybe what's fired when you get MC and previously attackable target
         -- becomes friendly?
         local unitToken = ...
         if unitToken == 'target' then
-            self:UpdateOverlayFilters(matchtarget)
+            self:UpdateOverlayFilters()
         end
     end
 end
