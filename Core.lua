@@ -2,76 +2,6 @@ local _, addon = ...
 
 --[[--------------------------------------------------------------------------]]--
 
--- These are per-spec but there's no point clearing them out I don't think.
--- [BarSpellID] = { [AuraSpellID] = true, ... }
-
-local LinkedSpellIDs = { }
-
-local function AddLinkedSpell(name, linkedSpellID)
-    LinkedSpellIDs[name] = LinkedSpellIDs[name] or {}
-    LinkedSpellIDs[name][linkedSpellID] = true
-end
-
--- TODO equipped items without spellID?
-local function ScanLinkedSpells()
-    for c = Enum.CooldownViewerCategoryMeta.MinValue, Enum.CooldownViewerCategoryMeta.MaxValue do
-        for _, cooldownID in ipairs(C_CooldownViewer.GetCooldownViewerCategorySet(c, true)) do
-            local info = C_CooldownViewer.GetCooldownViewerCooldownInfo(cooldownID)
-            if info.spellID then
-                local name = C_Spell.GetSpellName(info.spellID)
-                AddLinkedSpell(name, info.spellID)
-                for _, spellID in ipairs(info.linkedSpellIDs) do
-                    AddLinkedSpell(name, spellID)
-                    -- Also attach linked spells to anything with the same name.
-                    -- E.g., the Whirlwind buff is attached to Improved Whirlwind
-                    -- in the CDM but attach it to Whirlwind.
-                    local linkedName = C_Spell.GetSpellName(spellID)
-                    AddLinkedSpell(linkedName, spellID)
-                end
-            end
-        end
-    end
-end
-
-function addon.GetLinkedSpellIDs(spellID)
-    local spellIDs = { [spellID] = true }
-    local name = C_Spell.GetSpellName(spellID)
-    Mixin(spellIDs, LinkedSpellIDs[name] or {})
-    return spellIDs
-end
-
-function addon.GetRaidIncludeSpellIDs(spellID)
-    local conf = addon.db.profile.abilities[spellID]
-    local spellIDs = {}
-    if conf.enableDefault then
-        Mixin(spellIDs, addon.RaidBuffsBySpellID[spellID])
-    end
-    return spellIDs
-end
-
-function addon.GetIncludeSpellIDs(spellID)
-    local conf = addon.db.profile.abilities[spellID]
-
-    local spellIDs = {}
-
-    if conf.enableDefault then
-        Mixin(spellIDs, addon.GetLinkedSpellIDs(spellID))
-
-        -- Base spell if it's different
-        local baseSpellID = C_Spell.GetBaseSpell(spellID)
-        if baseSpellID ~= spellID then
-            Mixin(spellIDs, addon.GetLinkedSpellIDs(baseSpellID))
-        end
-    end
-
-    Mixin(spellIDs, addon.db.profile.abilities[spellID].linkedSpellIDs)
-
-    return spellIDs
-end
-
-
---[[--------------------------------------------------------------------------]]--
-
 local function EnumerateActionButtons()
     local buttons = {}
     for _, actionBar in ipairs(ActionButtonUtil.ActionBarButtonNames) do
@@ -88,120 +18,24 @@ local function EnumerateActionButtons()
     end
 end
 
-
 --[[--------------------------------------------------------------------------]]--
 
-local AuraDurationFormatter = C_StringUtil.CreateSecondsFormatter()
-AuraDurationFormatter:SetDefaultAbbreviation(Enum.SecondsFormatterAbbreviation.OneLetter)
-AuraDurationFormatter:SetMinInterval(Enum.SecondsFormatterInterval.Seconds)
-AuraDurationFormatter:SetDesiredUnitCount(1)
-AuraDurationFormatter:SetMillisecondsThreshold(3)
-AuraDurationFormatter:SetStripIntervalWhitespace(Enum.SecondsFormatterIntervalWhitespace.Strip)
 
-local AuraColorCurve = C_CurveUtil.CreateColorCurve()
-AuraColorCurve:SetType(Enum.LuaCurveType.Cosine)
-AuraColorCurve:AddPoint(0.0, CreateColor(1, 0.5, 0.5))
-AuraColorCurve:AddPoint(3.0, CreateColor(1, 1, 0.5))
-AuraColorCurve:AddPoint(10.0, CreateColor(1, 1, 1))
+local BadRestrictions = { 'Combat', 'Encounter', 'ChallengeMode', 'PvPMatch' }
 
-local durationTextOptions = {
-    textFormatter = AuraDurationFormatter,
-    textColor = {
-        curve = AuraColorCurve,
-        property = Enum.DurationTextBindingProperty.RemainingDuration
-    }
-}
-
-local function InitializeOverlay(f, cf)
-    -- AuraButton is not managing the border, it's fixed, since we don't need
-    -- the color to change depending on auraData.dispelName.
-    f.auraBorder:SetVertexColor(cf.color:GetRGBA())
-
-    f:SetDurationText(f.durationText, durationTextOptions)
-
-    f:SetApplicationCount(f.stacksText)
-
-    f:EnableMouse(false)
+local function IsModifyAllowed()
+    for _, r in ipairs(BadRestrictions) do
+        if C_RestrictedActions.IsAddOnRestrictionActive(Enum.AddOnRestrictionType[r]) then
+            return false
+        end
+    end
+    return true
 end
 
 
 --[[--------------------------------------------------------------------------]]--
-
-local AuraContainers = {
-    {
-        name = 'PLAYERBUFF',
-        filter = 'HELPFUL|INCLUDE_NAME_PLATE_ONLY',
-        unit = 'player',
-        color = CreateColor(0, 0.7, 0, 0.5),
-        templateNames = { 'ABAOverlayAuraTemplate' },
-        initializeFrame = InitializeOverlay,
-        includeRaidBuffs = true,
-        addFilters =
-            function (t, cf, actionID)
-                t.isHelpful = true
-            end,
-    },
-    {
-        name = 'TARGETDEBUFF',
-        filter = 'HARMFUL',
-        unit = 'target',
-        color = CreateColor(1, 0, 0, 0.5),
-        templateNames = { 'ABAOverlayAuraTemplate' },
-        initializeFrame = InitializeOverlay,
-        addFilters =
-            function (t, cf, actionID)
-                t.isHarmful = true
-            end,
-    }
---[[
-    {
-        name = 'TARGETSTEAL',
-        filter = 'HELPFUL',
-        unit = 'target',
-        color = CreateColor(1, 0, 0, 0.5),
-        templateNames = { 'ABAOverlayStealableTemplate' },
-        addFilters =
-            function (t, cf, actionID)
-                t.isHarmful = true
-                if not IsPurgeAction(actionID) then
-                    t.maxDuration = 0
-                end
-            end,
-    }
-]]
-}
 
 local buttonManagers = {}
-
-local function CreateButtonAuraSlot(cf, container, button)
-    local options = {
-        sortMethod = AuraContainerSortMethod.ExpirationOnly,
-        sortDirection = AuraContainerSortDirection.Reverse,
-        templateNames = cf.templateNames,
-        initializeFrame = cf.initializeFrame and function (f) cf.initializeFrame(f, cf) end
-    }
-    local auraSlotFilter = cf.filter .. '|PLAYER'
-    local as = container:AddAuraSlot("ABA", auraSlotFilter, options)
-    PixelUtil.SetSize(as, button:GetSize())
-    as:SetPoint("CENTER", button)
-    as:SetFrameLevel(button.cooldown:GetFrameLevel()+1)
-end
-
-local function HideAuraContainers()
-    for _, bm in pairs(buttonManagers) do
-        for _, cm in pairs(bm.controllers) do
-            cm.c:Hide()
-        end
-    end
-end
-
-local function ShowAuraContainers()
-    for _, bm in pairs(buttonManagers.controllers) do
-        for _, cm in pairs(bm) do
-            cm.c:Show()
-        end
-    end
-end
 
 -- This creates an insane amount of AuraContainers, two per ActionButton.
 --
@@ -222,111 +56,6 @@ end
 -- In theory in 12.1.5 we will get SetUnit per slot, which will allow one
 -- container per button with a slot for each category. Can then also
 -- prioritize them and not double up if we have both a buff and a debuff.
-
-local function CanEnable(cf)
-    local canAssist = UnitCanAssist('player', cf.unit, true, true)
-    if cf.filter == 'HARMFUL' and canAssist then
-        return false
-    elseif cf.filter == 'HELPFUL' and not canAssist then
-        return false
-    else
-        return true
-    end
-end
-
-local BadRestrictions = { 'Combat', 'Encounter', 'ChallengeMode', 'PvPMatch' }
-
-local function IsModifyAllowed()
-    for _, r in ipairs(BadRestrictions) do
-        if C_RestrictedActions.IsAddOnRestrictionActive(Enum.AddOnRestrictionType[r]) then
-            return false
-        end
-    end
-    return true
-end
-
-local function GetActionSpellID(actionID)
-    local actionType, id, actionSubType = GetActionInfo(actionID)
-    if (actionType =="spell" or actionSubType == "spell") and id then
-        return id
-    elseif actionType == "item" then
-        local _, spellID = C_Item.GetItemSpell(id)
-        return spellID
-    elseif actionType == "macro" and actionSubType == "item" then
-        local actionName = GetActionText(actionID)
-        local _, link = GetMacroItem(actionName)
-        if link then
-            local _, spellID = C_Item.GetItemSpell(link)
-            return spellID
-        end
-    end
-end
-
-local function IsRaidBuff(spellID)
-    return addon.RaidBuffsBySpellID[spellID] ~= nil
-end
-
-local function ApplyRaidFilters(cm, spellID)
-    local candidateFilters = {
-        includeSpellIDs = addon.GetRaidIncludeSpellIDs(spellID)
-    }
-    cm.cf.addFilters(candidateFilters)
-    cm.c:SetAuraSlotFilterString("ABA", cm.cf.filter..'|RAID')
-    cm.c:SetAuraSlotCandidateFilters("ABA", candidateFilters)
-end
-
-local function ApplyFilters(cm, spellID)
-    local candidateFilters = {
-        includeSpellIDs = addon.GetIncludeSpellIDs(spellID)
-    }
-    cm.cf.addFilters(candidateFilters)
-    cm.c:SetAuraSlotFilterString("ABA", cm.cf.filter..'|PLAYER')
-    cm.c:SetAuraSlotCandidateFilters("ABA", candidateFilters)
-end
-
-local function IsSpellDisabled(spellID)
-    if not spellID then
-        return true
-    else
-        return not addon.db.profile.abilities[spellID].enable
-    end
-end
-
-addon.ButtonManagerMixin = {}
-
-function addon.ButtonManagerMixin:Initialize(button)
-    self.button = button
-    self.controllers = {}
-    for _, cf in ipairs(AuraContainers) do
-        local c = CreateFrame('AuraContainer', nil, button, 'CustomAuraContainerTemplate')
-        c:SetPoint("TOPLEFT")
-        c:SetUnit(cf.unit)
-        local as = CreateButtonAuraSlot(cf, c, button)
-        self.controllers[cf.name] = { cf=cf, c=c, as=as }
-    end
-end
-
-function addon.ButtonManagerMixin:UpdateFilters(matchfunc)
-    local b = self.button
-    local spellID = GetActionSpellID(b.action)
-    local isRaidBuff = IsRaidBuff(spellID)
-    local isDisabled = IsSpellDisabled(spellID) or not b:IsVisible()
-    for _, cm in pairs(self.controllers) do
-        if not matchfunc or matchfunc(cm.cf) then
-            if isDisabled or not CanEnable(cm.cf) then
-                cm.c:SetEnabled(false)
-            elseif isRaidBuff and not cm.cf.includeRaidBuffs then
-                cm.c:SetEnabled(false)
-            elseif isRaidBuff then
-                ApplyRaidFilters(cm, spellID)
-                cm.c:SetEnabled(true)
-            else
-                ApplyFilters(cm, spellID)
-                cm.c:SetEnabled(true)
-            end
-        end
-    end
-end
 
 local function CreateButtonManager(button)
     local bm = CreateFromMixins(addon.ButtonManagerMixin)
@@ -373,22 +102,12 @@ local UpdateAllAurasEvents = {
     ['UNIT_FACTION'] = true,
 }
 
-local AllEvents = CreateFromMixins(UpdateFiltersEvents, ScanLinkedSpellsEvents, UpdateAllAurasEvents)
-
-local function OnEditModeEnter()
-    HideAuraContainers()
-end
-
-local function OnEditModeExit()
-    ShowAuraContainers()
-end
-
 local function Initialize()
     addon.InitializeOptions()
-    FrameUtil.RegisterFrameForEvents(EventFrame, GetKeysArray(AllEvents))
-    EventRegistry:RegisterCallback("EditMode.Enter", OnEditModeEnter)
-    EventRegistry:RegisterCallback("EditMode.Exit", OnEditModeExit)
-    ScanLinkedSpells()
+    FrameUtil.RegisterFrameForEvents(EventFrame, GetKeysArray(UpdateFiltersEvents))
+    FrameUtil.RegisterFrameForEvents(EventFrame, GetKeysArray(ScanLinkedSpellsEvents))
+    FrameUtil.RegisterFrameForEvents(EventFrame, GetKeysArray(UpdateAllAurasEvents))
+    addon.ScanLinkedSpells()
     UpdateOverlayFilters()
 end
 
@@ -399,7 +118,7 @@ local function OnEvent(_, event, ...)
     elseif UpdateFiltersEvents[event] then
         UpdateOverlayFilters()
     elseif ScanLinkedSpellsEvents[event] then
-        ScanLinkedSpells()
+        addon.ScanLinkedSpells()
         UpdateOverlayFilters()
     elseif event == 'PLAYER_TARGET_CHANGED' then
         UpdateOverlayFilters(matchtarget)
