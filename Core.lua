@@ -189,14 +189,14 @@ end
 
 local function HideAuraContainers()
     for _, bm in pairs(buttonManagers) do
-        for _, cm in pairs(bm) do
+        for _, cm in pairs(bm.controllers) do
             cm.c:Hide()
         end
     end
 end
 
 local function ShowAuraContainers()
-    for _, bm in pairs(buttonManagers) do
+    for _, bm in pairs(buttonManagers.controllers) do
         for _, cm in pairs(bm) do
             cm.c:Show()
         end
@@ -222,24 +222,6 @@ end
 -- In theory in 12.1.5 we will get SetUnit per slot, which will allow one
 -- container per button with a slot for each category. Can then also
 -- prioritize them and not double up if we have both a buff and a debuff.
-
-local function CreateButtonManager(button)
-    local bm = {}
-    for _, cf in ipairs(AuraContainers) do
-        local c = CreateFrame('AuraContainer', nil, button, 'CustomAuraContainerTemplate')
-        c:SetPoint("TOPLEFT")
-        c:SetUnit(cf.unit)
-        local as = CreateButtonAuraSlot(cf, c, button)
-        bm[cf.name] = { cf=cf, c=c, as=as }
-    end
-    return bm
-end
-
-local function CreateAuraContainers()
-    for button in EnumerateActionButtons() do
-        buttonManagers[button:GetName()] = CreateButtonManager(button)
-    end
-end
 
 local function CanEnable(cf)
     local canAssist = UnitCanAssist('player', cf.unit, true, true)
@@ -310,27 +292,57 @@ local function IsSpellDisabled(spellID)
     end
 end
 
-local function UpdateOverlayFilters(matchfunc)
-    for buttonName, buttonManager in pairs(buttonManagers) do
-        local b = _G[buttonName]
-        local spellID = GetActionSpellID(b.action)
-        local isRaidBuff = IsRaidBuff(spellID)
-        local isDisabled = IsSpellDisabled(spellID) or not b:IsVisible()
-        for _, cm in pairs(buttonManager) do
-            if not matchfunc or matchfunc(cm.cf) then
-                if isDisabled or not CanEnable(cm.cf) then
-                    cm.c:SetEnabled(false)
-                elseif isRaidBuff and not cm.cf.includeRaidBuffs then
-                    cm.c:SetEnabled(false)
-                elseif isRaidBuff then
-                    ApplyRaidFilters(cm, spellID)
-                    cm.c:SetEnabled(true)
-                else
-                    ApplyFilters(cm, spellID)
-                    cm.c:SetEnabled(true)
-                end
+addon.ButtonManagerMixin = {}
+
+function addon.ButtonManagerMixin:Initialize(button)
+    self.button = button
+    self.controllers = {}
+    for _, cf in ipairs(AuraContainers) do
+        local c = CreateFrame('AuraContainer', nil, button, 'CustomAuraContainerTemplate')
+        c:SetPoint("TOPLEFT")
+        c:SetUnit(cf.unit)
+        local as = CreateButtonAuraSlot(cf, c, button)
+        self.controllers[cf.name] = { cf=cf, c=c, as=as }
+    end
+end
+
+function addon.ButtonManagerMixin:UpdateFilters(matchfunc)
+    local b = self.button
+    local spellID = GetActionSpellID(b.action)
+    local isRaidBuff = IsRaidBuff(spellID)
+    local isDisabled = IsSpellDisabled(spellID) or not b:IsVisible()
+    for _, cm in pairs(self.controllers) do
+        if not matchfunc or matchfunc(cm.cf) then
+            if isDisabled or not CanEnable(cm.cf) then
+                cm.c:SetEnabled(false)
+            elseif isRaidBuff and not cm.cf.includeRaidBuffs then
+                cm.c:SetEnabled(false)
+            elseif isRaidBuff then
+                ApplyRaidFilters(cm, spellID)
+                cm.c:SetEnabled(true)
+            else
+                ApplyFilters(cm, spellID)
+                cm.c:SetEnabled(true)
             end
         end
+    end
+end
+
+local function CreateButtonManager(button)
+    local bm = CreateFromMixins(addon.ButtonManagerMixin)
+    bm:Initialize(button)
+    return bm
+end
+
+local function CreateButtonManagers()
+    for button in EnumerateActionButtons() do
+        buttonManagers[button:GetName()] = CreateButtonManager(button)
+    end
+end
+
+local function UpdateOverlayFilters(matchfunc)
+    for _, buttonManager in pairs(buttonManagers) do
+        buttonManager:UpdateFilters(matchfunc)
     end
 end
 
@@ -409,5 +421,5 @@ end
 do
     EventFrame:RegisterEvent('PLAYER_LOGIN')
     EventFrame:SetScript('OnEvent', OnEvent)
-    CreateAuraContainers()
+    CreateButtonManagers()
 end
