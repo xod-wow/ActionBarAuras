@@ -12,7 +12,10 @@ embeds.xml
 Overlay.xml
 
 Options.lua
+
 Data\RaidBuffs.lua
+LinkedSpells.lua
+ButtonManager.lua
 Core.lua
 
 UI\UI.xml
