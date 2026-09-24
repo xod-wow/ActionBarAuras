@@ -124,10 +124,12 @@ local function InitializeOverlay(f, cf)
     f:EnableMouse(false)
 end
 
+
 --[[--------------------------------------------------------------------------]]--
 
 local AuraContainers = {
     {
+        name = 'PLAYERBUFF',
         filter = 'HELPFUL|INCLUDE_NAME_PLATE_ONLY',
         unit = 'player',
         color = CreateColor(0, 0.7, 0, 0.5),
@@ -140,6 +142,7 @@ local AuraContainers = {
             end,
     },
     {
+        name = 'TARGETDEBUFF',
         filter = 'HARMFUL',
         unit = 'target',
         color = CreateColor(1, 0, 0, 0.5),
@@ -152,6 +155,7 @@ local AuraContainers = {
     }
 --[[
     {
+        name = 'TARGETSTEAL',
         filter = 'HELPFUL',
         unit = 'target',
         color = CreateColor(1, 0, 0, 0.5),
@@ -166,6 +170,8 @@ local AuraContainers = {
     }
 ]]
 }
+
+local buttonManagers = {}
 
 local function CreateButtonAuraSlot(cf, container, button)
     local options = {
@@ -182,17 +188,17 @@ local function CreateButtonAuraSlot(cf, container, button)
 end
 
 local function HideAuraContainers()
-    for _, cf in ipairs(AuraContainers) do
-        for _, c in pairs(cf.buttonContainers) do
-            c:Hide()
+    for _, bm in pairs(buttonManagers) do
+        for _, cm in pairs(bm) do
+            cm.c:Hide()
         end
     end
 end
 
 local function ShowAuraContainers()
-    for _, cf in ipairs(AuraContainers) do
-        for _, c in pairs(cf.buttonContainers) do
-            c:Show()
+    for _, bm in pairs(buttonManagers) do
+        for _, cm in pairs(bm) do
+            cm.c:Show()
         end
     end
 end
@@ -218,16 +224,16 @@ end
 -- prioritize them and not double up if we have both a buff and a debuff.
 
 local function CreateAuraContainers()
-    for _, cf in ipairs(AuraContainers) do
-        cf.buttonContainers = {}
-        for button in EnumerateActionButtons() do
-            local name = button:GetName() ..'ABAContainer'
-            local c = CreateFrame('AuraContainer', name, button, 'CustomAuraContainerTemplate')
+    for button in EnumerateActionButtons() do
+        local bm = {}
+        for _, cf in ipairs(AuraContainers) do
+            local c = CreateFrame('AuraContainer', nil, button, 'CustomAuraContainerTemplate')
             c:SetPoint("TOPLEFT")
             c:SetUnit(cf.unit)
-            CreateButtonAuraSlot(cf, c, button)
-            cf.buttonContainers[button:GetName()] = c
+            local as = CreateButtonAuraSlot(cf, c, button)
+            bm[cf.name] = { cf=cf, c=c, as=as }
         end
+        buttonManagers[button:GetName()] = bm
     end
 end
 
@@ -301,24 +307,24 @@ local function IsSpellDisabled(spellID)
 end
 
 local function UpdateOverlayFilters(matchfunc)
-    for _, cf in ipairs(AuraContainers) do
-        if not matchfunc or matchfunc(cf) then
-            local canEnable = CanEnable(cf)
-            for name, c in pairs(cf.buttonContainers) do
-                local b = _G[name]
+    for buttonName, buttonManager in pairs(buttonManagers) do
+        for _, cm in pairs(buttonManager) do
+            if not matchfunc or matchfunc(cm.cf) then
+                local canEnable = CanEnable(cm.cf)
+                local b = _G[buttonName]
                 local spellID = GetActionSpellID(b.action)
                 if not canEnable or IsSpellDisabled(spellID) or not b:IsVisible() then
-                    c:SetEnabled(false)
+                    cm.c:SetEnabled(false)
                 elseif IsRaidBuff(spellID) then
-                    if cf.includeRaidBuffs then
-                        ApplyRaidFilters(cf, c, spellID)
-                        c:SetEnabled(true)
+                    if cm.cf.includeRaidBuffs then
+                        ApplyRaidFilters(cm.cf, cm.c, spellID)
+                        cm.c:SetEnabled(true)
                     else
-                        c:SetEnabled(false)
+                        cm.c:SetEnabled(false)
                     end
                 else
-                    ApplyFilters(cf, c, spellID)
-                    c:SetEnabled(true)
+                    ApplyFilters(cm.cf, cm.c, spellID)
+                    cm.c:SetEnabled(true)
                 end
             end
         end
@@ -372,7 +378,7 @@ local function Initialize()
 end
 
 local function OnEvent(_, event, ...)
-    local function cfmatchtarget(cf) return cf.unit == 'target' end
+    local function matchtarget(cf) return cf.unit == 'target' end
     if event == 'PLAYER_LOGIN' then
         Initialize()
     elseif UpdateFiltersEvents[event] then
@@ -381,13 +387,13 @@ local function OnEvent(_, event, ...)
         ScanLinkedSpells()
         UpdateOverlayFilters()
     elseif event == 'PLAYER_TARGET_CHANGED' then
-        UpdateOverlayFilters(cfmatchtarget)
+        UpdateOverlayFilters(matchtarget)
     elseif event == 'UNIT_FACTION' then
         -- Maybe what's fired when you get MC and previously attackable target
         -- becomes friendly?
         local unitToken = ...
         if unitToken == 'target' then
-            UpdateOverlayFilters(cfmatchtarget)
+            UpdateOverlayFilters(matchtarget)
         end
     end
 end
