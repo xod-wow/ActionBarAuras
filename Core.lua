@@ -223,17 +223,21 @@ end
 -- container per button with a slot for each category. Can then also
 -- prioritize them and not double up if we have both a buff and a debuff.
 
+local function CreateButtonManager(button)
+    local bm = {}
+    for _, cf in ipairs(AuraContainers) do
+        local c = CreateFrame('AuraContainer', nil, button, 'CustomAuraContainerTemplate')
+        c:SetPoint("TOPLEFT")
+        c:SetUnit(cf.unit)
+        local as = CreateButtonAuraSlot(cf, c, button)
+        bm[cf.name] = { cf=cf, c=c, as=as }
+    end
+    return bm
+end
+
 local function CreateAuraContainers()
     for button in EnumerateActionButtons() do
-        local bm = {}
-        for _, cf in ipairs(AuraContainers) do
-            local c = CreateFrame('AuraContainer', nil, button, 'CustomAuraContainerTemplate')
-            c:SetPoint("TOPLEFT")
-            c:SetUnit(cf.unit)
-            local as = CreateButtonAuraSlot(cf, c, button)
-            bm[cf.name] = { cf=cf, c=c, as=as }
-        end
-        buttonManagers[button:GetName()] = bm
+        buttonManagers[button:GetName()] = CreateButtonManager(button)
     end
 end
 
@@ -280,22 +284,22 @@ local function IsRaidBuff(spellID)
     return addon.RaidBuffsBySpellID[spellID] ~= nil
 end
 
-local function ApplyRaidFilters(cf, c, spellID)
+local function ApplyRaidFilters(cm, spellID)
     local candidateFilters = {
         includeSpellIDs = addon.GetRaidIncludeSpellIDs(spellID)
     }
-    cf.addFilters(candidateFilters)
-    c:SetAuraSlotFilterString("ABA", cf.filter..'|RAID')
-    c:SetAuraSlotCandidateFilters("ABA", candidateFilters)
+    cm.cf.addFilters(candidateFilters)
+    cm.c:SetAuraSlotFilterString("ABA", cm.cf.filter..'|RAID')
+    cm.c:SetAuraSlotCandidateFilters("ABA", candidateFilters)
 end
 
-local function ApplyFilters(cf, c, spellID)
+local function ApplyFilters(cm, spellID)
     local candidateFilters = {
         includeSpellIDs = addon.GetIncludeSpellIDs(spellID)
     }
-    cf.addFilters(candidateFilters)
-    c:SetAuraSlotFilterString("ABA", cf.filter..'|PLAYER')
-    c:SetAuraSlotCandidateFilters("ABA", candidateFilters)
+    cm.cf.addFilters(candidateFilters)
+    cm.c:SetAuraSlotFilterString("ABA", cm.cf.filter..'|PLAYER')
+    cm.c:SetAuraSlotCandidateFilters("ABA", candidateFilters)
 end
 
 local function IsSpellDisabled(spellID)
@@ -308,22 +312,21 @@ end
 
 local function UpdateOverlayFilters(matchfunc)
     for buttonName, buttonManager in pairs(buttonManagers) do
+        local b = _G[buttonName]
+        local spellID = GetActionSpellID(b.action)
+        local isRaidBuff = IsRaidBuff(spellID)
+        local isDisabled = IsSpellDisabled(spellID) or not b:IsVisible()
         for _, cm in pairs(buttonManager) do
             if not matchfunc or matchfunc(cm.cf) then
-                local canEnable = CanEnable(cm.cf)
-                local b = _G[buttonName]
-                local spellID = GetActionSpellID(b.action)
-                if not canEnable or IsSpellDisabled(spellID) or not b:IsVisible() then
+                if isDisabled or not CanEnable(cm.cf) then
                     cm.c:SetEnabled(false)
-                elseif IsRaidBuff(spellID) then
-                    if cm.cf.includeRaidBuffs then
-                        ApplyRaidFilters(cm.cf, cm.c, spellID)
-                        cm.c:SetEnabled(true)
-                    else
-                        cm.c:SetEnabled(false)
-                    end
+                elseif isRaidBuff and not cm.cf.includeRaidBuffs then
+                    cm.c:SetEnabled(false)
+                elseif isRaidBuff then
+                    ApplyRaidFilters(cm, spellID)
+                    cm.c:SetEnabled(true)
                 else
-                    ApplyFilters(cm.cf, cm.c, spellID)
+                    ApplyFilters(cm, spellID)
                     cm.c:SetEnabled(true)
                 end
             end
