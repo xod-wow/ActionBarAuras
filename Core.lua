@@ -35,8 +35,6 @@ end
 
 --[[--------------------------------------------------------------------------]]--
 
-local buttonManagers = {}
-
 -- This creates an insane amount of AuraContainers, two per ActionButton.
 --
 -- I don't know if this is necessarily less computationally efficient in any
@@ -56,26 +54,6 @@ local buttonManagers = {}
 -- In theory in 12.1.5 we will get SetUnit per slot, which will allow one
 -- container per button with a slot for each category. Can then also
 -- prioritize them and not double up if we have both a buff and a debuff.
-
-local function CreateButtonManager(button)
-    local bm = CreateFromMixins(addon.ButtonManagerMixin)
-    bm:Initialize(button)
-    return bm
-end
-
-local function CreateButtonManagers()
-    for button in EnumerateActionButtons() do
-        buttonManagers[button:GetName()] = CreateButtonManager(button)
-    end
-end
-
-local function UpdateOverlayFilters(matchfunc)
-    for _, buttonManager in pairs(buttonManagers) do
-        buttonManager:UpdateFilters(matchfunc)
-    end
-end
-
-local EventFrame = CreateFrame('Frame')
 
 local UpdateFiltersEvents = {
     ['ACTIONBAR_PAGE_CHANGED'] = true,
@@ -97,48 +75,70 @@ local ScanLinkedSpellsEvents = {
     ['TRAIT_CONFIG_UPDATED'] = true,
 }
 
+-- In 12.1.5 this will be handled natively by CustomAuraContainerTemplate
 local UpdateAllAurasEvents = {
     ['PLAYER_TARGET_CHANGED'] = true,
     ['UNIT_FACTION'] = true,
 }
 
-local function Initialize()
-    addon.InitializeOptions()
-    FrameUtil.RegisterFrameForEvents(EventFrame, GetKeysArray(UpdateFiltersEvents))
-    FrameUtil.RegisterFrameForEvents(EventFrame, GetKeysArray(ScanLinkedSpellsEvents))
-    FrameUtil.RegisterFrameForEvents(EventFrame, GetKeysArray(UpdateAllAurasEvents))
-    addon.ScanLinkedSpells()
-    UpdateOverlayFilters()
+local function CreateButtonManager(button)
+    local bm = CreateFromMixins(addon.ButtonManagerMixin)
+    bm:Initialize(button)
+    return bm
 end
 
-local function OnEvent(_, event, ...)
+local Controller = CreateFrame('Frame')
+
+function Controller:CreateButtonManagers()
+    self.buttonManagers = {}
+    for button in EnumerateActionButtons() do
+        self.buttonManagers[button:GetName()] = CreateButtonManager(button)
+    end
+end
+
+function Controller:UpdateOverlayFilters(matchfunc)
+    for _, buttonManager in pairs(self.buttonManagers) do
+        buttonManager:UpdateFilters(matchfunc)
+    end
+end
+
+function Controller:Initialize()
+    addon.InitializeOptions()
+    FrameUtil.RegisterFrameForEvents(self, GetKeysArray(UpdateFiltersEvents))
+    FrameUtil.RegisterFrameForEvents(self, GetKeysArray(ScanLinkedSpellsEvents))
+    FrameUtil.RegisterFrameForEvents(self, GetKeysArray(UpdateAllAurasEvents))
+    addon.ScanLinkedSpells()
+    self:UpdateOverlayFilters()
+end
+
+function Controller:OnEvent(event, ...)
     local function matchtarget(cf) return cf.unit == 'target' end
     if event == 'PLAYER_LOGIN' then
-        Initialize()
+        self:Initialize()
     elseif UpdateFiltersEvents[event] then
-        UpdateOverlayFilters()
+        self:UpdateOverlayFilters()
     elseif ScanLinkedSpellsEvents[event] then
         addon.ScanLinkedSpells()
-        UpdateOverlayFilters()
+        self:UpdateOverlayFilters()
     elseif event == 'PLAYER_TARGET_CHANGED' then
-        UpdateOverlayFilters(matchtarget)
+        self:UpdateOverlayFilters(matchtarget)
     elseif event == 'UNIT_FACTION' then
         -- Maybe what's fired when you get MC and previously attackable target
         -- becomes friendly?
         local unitToken = ...
         if unitToken == 'target' then
-            UpdateOverlayFilters(matchtarget)
+            self:UpdateOverlayFilters(matchtarget)
         end
     end
 end
 
 function addon.OnOptionsChanged()
-    UpdateOverlayFilters()
+    Controller:UpdateOverlayFilters()
 end
 
 -- PLAYER_LOGIN is too late for creating AuraContainer during restrictions
 do
-    EventFrame:RegisterEvent('PLAYER_LOGIN')
-    EventFrame:SetScript('OnEvent', OnEvent)
-    CreateButtonManagers()
+    Controller:RegisterEvent('PLAYER_LOGIN')
+    Controller:SetScript('OnEvent', Controller.OnEvent)
+    Controller:CreateButtonManagers()
 end
