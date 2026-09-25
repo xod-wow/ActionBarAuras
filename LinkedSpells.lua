@@ -6,8 +6,10 @@ local _, addon = ...
 local LinkedSpellIDs = { }
 
 local function AddLinkedSpell(name, linkedSpellID)
-    LinkedSpellIDs[name] = LinkedSpellIDs[name] or {}
-    LinkedSpellIDs[name][linkedSpellID] = true
+    if name then
+        LinkedSpellIDs[name] = LinkedSpellIDs[name] or {}
+        LinkedSpellIDs[name][linkedSpellID] = true
+    end
 end
 
 -- TODO equipped items without spellID?
