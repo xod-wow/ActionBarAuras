@@ -20,12 +20,19 @@
         </Layers>
     </Button>
 
-    <Button name="ABAOverlayStealableTemplate" virtual="true">
+    <Button name="ABAOverlayHighlightTemplate" virtual="true">
         <Layers>
             <Layer level="ARTWORK">
                 <Texture parentKey="ProcLoopFlipbook" atlas="UI-HUD-ActionBar-Proc-Loop-Flipbook" hidden="true">
                     <Anchors> <Anchor point="CENTER" /> </Anchors>
                 </Texture>
+            </Layer>
+            <Layer level="OVERLAY">
+                <FontString parentKey="durationText" inherits="NumberFontNormal">
+                    <Anchors>
+                        <Anchor point="BOTTOMLEFT" x="3" y="3" />
+                    </Anchors>
+                </FontString>
             </Layer>
         </Layers>
         <Animations>

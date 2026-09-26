@@ -13,7 +13,9 @@ Overlay.xml
 
 Options.lua
 
-Data\RaidBuffs.lua
+Data\HostileDispel.lua
+Data\RaidBuff.lua
+
 LinkedSpells.lua
 ButtonManager.lua
 Core.lua
