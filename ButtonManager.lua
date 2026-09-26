@@ -23,10 +23,10 @@ local durationTextOptions = {
     }
 }
 
-local function InitializeOverlay(f, cf)
+local function InitializeOverlay(f, fd)
     -- AuraButton is not managing the border, it's fixed, since we don't need
     -- the color to change depending on auraData.dispelName.
-    f.auraBorder:SetVertexColor(cf.color:GetRGBA())
+    f.auraBorder:SetVertexColor(fd.color:GetRGBA())
 
     f:SetDurationText(f.durationText, durationTextOptions)
 
@@ -48,7 +48,7 @@ local FilterDefinitions = {
         initializeFrame = InitializeOverlay,
         includeRaidBuffs = true,
         addFilters =
-            function (t, cf, actionID)
+            function (t, fd, actionID)
                 t.isHelpful = true
             end,
     },
@@ -60,7 +60,7 @@ local FilterDefinitions = {
         templateNames = { 'ABAOverlayAuraTemplate' },
         initializeFrame = InitializeOverlay,
         addFilters =
-            function (t, cf, actionID)
+            function (t, fd, actionID)
                 t.isHarmful = true
             end,
     }
@@ -72,7 +72,7 @@ local FilterDefinitions = {
         color = CreateColor(1, 0, 0, 0.5),
         templateNames = { 'ABAOverlayStealableTemplate' },
         addFilters =
-            function (t, cf, actionID)
+            function (t, fd, actionID)
                 t.isHarmful = true
                 if not IsPurgeAction(actionID) then
                     t.maxDuration = 0
@@ -88,26 +88,26 @@ local FilterDefinitions = {
 local AuraContainerManagerMixin = {}
 
 function AuraContainerManagerMixin:CreateAuraSlot()
-    local cf = self.cf
+    local fd = self.fd
     local options = {
         sortMethod = AuraContainerSortMethod.ExpirationOnly,
         sortDirection = AuraContainerSortDirection.Reverse,
-        templateNames = cf.templateNames,
-        initializeFrame = cf.initializeFrame and function (f) cf.initializeFrame(f, cf) end
+        templateNames = fd.templateNames,
+        initializeFrame = fd.initializeFrame and function (f) fd.initializeFrame(f, fd) end
     }
-    local auraSlotFilter = cf.filter .. '|PLAYER'
+    local auraSlotFilter = fd.filter .. '|PLAYER'
     self.as = self.c:AddAuraSlot("ABA", auraSlotFilter, options)
     PixelUtil.SetSize(self.as, self.button:GetSize())
     self.as:SetPoint("CENTER", self.button)
     self.as:SetFrameLevel(self.button.cooldown:GetFrameLevel()+1)
 end
 
-function AuraContainerManagerMixin:Initialize(cf, button)
-    self.cf = cf
+function AuraContainerManagerMixin:Initialize(fd, button)
+    self.fd = fd
     self.button = button
     self.c = CreateFrame('AuraContainer', nil, button, 'CustomAuraContainerTemplate')
     self.c:SetPoint("TOPLEFT")
-    self.c:SetUnit(cf.unit)
+    self.c:SetUnit(fd.unit)
     self:CreateAuraSlot()
 end
 
@@ -115,21 +115,71 @@ function AuraContainerManagerMixin:ApplyFilters(spellID, isRaidBuff)
     local candidateFilters, filter = {}
     if isRaidBuff then
         candidateFilters.includeSpellIDs = addon.GetRaidIncludeSpellIDs(spellID)
-        filter = self.cf.filter..'|RAID'
+        filter = self.fd.filter..'|RAID'
     else
         candidateFilters.includeSpellIDs = addon.GetIncludeSpellIDs(spellID)
-        filter = self.cf.filter..'|PLAYER'
+        filter = self.fd.filter..'|PLAYER'
     end
-    self.cf.addFilters(candidateFilters)
+    self.fd.addFilters(candidateFilters)
     self.c:SetAuraSlotFilterString("ABA", filter)
     self.c:SetAuraSlotCandidateFilters("ABA", candidateFilters)
 end
 
-function AuraContainerManagerMixin:GetActionID()
+local function IsSpellDisabled(spellID)
+    if not spellID then
+        return true
+    else
+        return not addon.db.profile.abilities[spellID].enable
+    end
+end
+
+function AuraContainerManagerMixin:ShouldDisable(spellID, isRaidBuff)
+    if not self.button:IsVisible() then
+        return true
+    elseif IsSpellDisabled(spellID) then
+        return true
+    elseif isRaidBuff and not self.fd.includeRaidBuffs then
+        return true
+    end
+    local canAssist = UnitCanAssist('player', self.fd.unit, true, true)
+    if self.fd.filter == 'HARMFUL' and canAssist then
+        return true
+    elseif self.fd.filter == 'HELPFUL' and not canAssist then
+        return true
+    else
+        return false
+    end
+end
+
+local function IsRaidBuff(spellID)
+    return addon.RaidBuffsBySpellID[spellID] ~= nil
+end
+
+function AuraContainerManagerMixin:UpdateFilters(spellID, isRaidBuff)
+    if self:ShouldDisable(spellID, isRaidBuff) then
+        self.c:SetEnabled(false)
+    else
+        self:ApplyFilters(spellID, isRaidBuff)
+        self.c:SetEnabled(true)
+    end
+end
+
+local function CreateAuraContainerManager(fd, button)
+    local acm = CreateFromMixins(AuraContainerManagerMixin)
+    acm:Initialize(fd, button)
+    return acm
+end
+
+
+--[[--------------------------------------------------------------------------]]--
+
+addon.ButtonManagerMixin = {}
+
+function addon.ButtonManagerMixin:GetActionID()
     return self.button.action
 end
 
-function AuraContainerManagerMixin:GetActionSpellID()
+function addon.ButtonManagerMixin:GetActionSpellID()
     local actionID = self:GetActionID()
     local actionType, id, actionSubType = GetActionInfo(actionID)
     if (actionType =="spell" or actionSubType == "spell") and id then
@@ -147,80 +197,18 @@ function AuraContainerManagerMixin:GetActionSpellID()
     end
 end
 
-local function IsSpellDisabled(spellID)
-    if not spellID then
-        return true
-    else
-        return not addon.db.profile.abilities[spellID].enable
-    end
-end
-
-function AuraContainerManagerMixin:ShouldDisable(spellID, isRaidBuff)
-    if not self.button:IsVisible() then
-        return true
-    elseif IsSpellDisabled(spellID) then
-        return true
-    elseif isRaidBuff and not self.cf.includeRaidBuffs then
-        return true
-    end
-    local canAssist = UnitCanAssist('player', self.cf.unit, true, true)
-    if self.cf.filter == 'HARMFUL' and canAssist then
-        return true
-    elseif self.cf.filter == 'HELPFUL' and not canAssist then
-        return true
-    else
-        return false
-    end
-end
-
-local function IsRaidBuff(spellID)
-    return addon.RaidBuffsBySpellID[spellID] ~= nil
-end
-
-function AuraContainerManagerMixin:UpdateFilters()
-    local spellID = self:GetActionSpellID()
-    local function debug(...) if spellID == 1459 then print(...) end end
-    local isRaidBuff = IsRaidBuff(spellID)
-    if self:ShouldDisable(spellID, isRaidBuff) then
-        self.c:SetEnabled(false)
-    else
-        self:ApplyFilters(spellID, isRaidBuff)
-        self.c:SetEnabled(true)
-    end
-end
-
-local function CreateAuraContainerManager(cf, button)
-    local acm = CreateFromMixins(AuraContainerManagerMixin)
-    acm:Initialize(cf, button)
-    return acm
-end
-
-
---[[--------------------------------------------------------------------------]]--
-
-addon.ButtonManagerMixin = {}
-
 function addon.ButtonManagerMixin:Initialize(button)
+    self.button = button
     self.acm = {}
-    for _, cf in ipairs(FilterDefinitions) do
-        self.acm[cf.name] = CreateAuraContainerManager(cf, button)
+    for _, fd in ipairs(FilterDefinitions) do
+        self.acm[fd.name] = CreateAuraContainerManager(fd, button)
     end
 end
 
 function addon.ButtonManagerMixin:UpdateFilters()
-    for _, cm in pairs(self.acm) do
-        cm:UpdateFilters()
-    end
-end
-
-function addon.ButtonManagerMixin:Hide()
-    for _, cm in pairs(self.acm) do
-        cm.c:Hide()
-    end
-end
-
-function addon.ButtonManagerMixin:Show()
-    for _, cm in pairs(self.acm) do
-        cm.c:Show()
+    local spellID = self:GetActionSpellID()
+    local isRaidBuff = IsRaidBuff(spellID)
+    for _, auraContainerManager in pairs(self.acm) do
+        auraContainerManager:UpdateFilters(spellID, isRaidBuff)
     end
 end
