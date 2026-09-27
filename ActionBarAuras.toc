@@ -13,6 +13,7 @@ Overlay.xml
 
 Options.lua
 
+Data\Deenrage.lua
 Data\HostileDispel.lua
 Data\RaidBuff.lua
 
