@@ -132,7 +132,7 @@ local FilterDefinitions = {
                 if canAssist then
                     return false
                 else
-                    IsPurgeSpell(spellID)
+                    addon.IsHostileDispel(spellID)
                 end
             end,
         GetFilters =
@@ -140,7 +140,30 @@ local FilterDefinitions = {
                 local candidateFilters = { isHelpful = true, isStealable = true }
                 return 'HELPFUL', candidateFilters
             end,
-    }
+    },
+    {
+        name = 'TARGETSOOTHE',
+        unit = 'target',
+        templateNames = { 'ABAOverlayHighlightTemplate' },
+        InitializeFrame = InitializeHighlightOverlay,
+        GetEnabled =
+            function (spellID)
+                local canAssist = UnitCanAssist('player', 'target', true, true)
+                if canAssist then
+                    return false
+                else
+                    addon.IsDeenrage(spellID)
+                end
+            end,
+        GetFilters =
+            function (spellID)
+                local candidateFilters = {
+                    isHelpful = true,
+                    includeDispelTypes = { Enrage = true }
+                }
+                return 'HELPFUL', candidateFilters
+            end,
+    },
 ]]
 }
 

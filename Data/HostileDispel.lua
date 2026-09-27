@@ -1,6 +1,6 @@
 local _, addon = ...
 
-local HostileDispels = {
+local HostileDispelSpells = {
     [278326] = true,    -- Consume Magic (Demon Hunter)
     [ 19801] = true,    -- Tranquilizing Shot (Hunter)
     [ 30449] = true,    -- Spellsteal (Mage)
@@ -11,15 +11,15 @@ local HostileDispels = {
     [ 25046] = true,    -- Arcane Torrent (Blood Elf Rogue)
 }
 
-local HostileDispelsByName = {}
-for spellID in pairs(HostileDispels) do
+local HostileDispelSpellsByName = {}
+for spellID in pairs(HostileDispelSpells) do
     local name = C_Spell.GetSpellName(spellID)
     if name then
-        HostileDispelsByName[name] = true
+        HostileDispelSpellsByName[name] = true
     end
 end
 
 function addon.IsHostileDispel(spellID)
     local name = C_Spell.GetSpellName(spellID)
-    return HostileDispelsByName[name] == true
+    return HostileDispelSpellsByName[name] == true
 end
