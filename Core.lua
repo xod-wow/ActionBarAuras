@@ -87,31 +87,38 @@ local function CreateButtonManager(button)
     return bm
 end
 
-local Controller = CreateFrame('Frame')
+addon.Controller = CreateFrame('Frame')
 
-function Controller:CreateButtonManagers()
+function addon.Controller:CreateButtonManagers()
     self.buttonManagers = {}
     for button in EnumerateActionButtons() do
         self.buttonManagers[button:GetName()] = CreateButtonManager(button)
     end
 end
 
-function Controller:UpdateOverlayFilters()
+function addon.Controller:UpdateOverlayFilters()
     for _, buttonManager in pairs(self.buttonManagers) do
         buttonManager:UpdateFilters()
     end
 end
 
-function Controller:Initialize()
+function addon.Controller:StyleAllOverlays()
+    for _, buttonManager in pairs(self.buttonManagers) do
+        buttonManager:Style()
+    end
+end
+
+function addon.Controller:Initialize()
     addon.InitializeOptions()
     FrameUtil.RegisterFrameForEvents(self, GetKeysArray(UpdateFiltersEvents))
     FrameUtil.RegisterFrameForEvents(self, GetKeysArray(ScanLinkedSpellsEvents))
     FrameUtil.RegisterFrameForEvents(self, GetKeysArray(UpdateAllAurasEvents))
     addon.ScanLinkedSpells()
+    self:StyleAllOverlays()
     self:UpdateOverlayFilters()
 end
 
-function Controller:OnEvent(event, ...)
+function addon.Controller:OnEvent(event, ...)
     if event == 'PLAYER_LOGIN' then
         self:Initialize()
     elseif UpdateFiltersEvents[event] then
@@ -132,12 +139,16 @@ function Controller:OnEvent(event, ...)
 end
 
 function addon.OnOptionsChanged()
-    Controller:UpdateOverlayFilters()
+    addon.Controller:UpdateOverlayFilters()
 end
 
 -- PLAYER_LOGIN is too late for creating AuraContainer during restrictions
 do
-    Controller:RegisterEvent('PLAYER_LOGIN')
-    Controller:SetScript('OnEvent', Controller.OnEvent)
-    Controller:CreateButtonManagers()
+    addon.Controller:RegisterEvent('PLAYER_LOGIN')
+    addon.Controller:SetScript('OnEvent', addon.Controller.OnEvent)
+    addon.Controller:CreateButtonManagers()
 end
+
+--@debug@
+ABA = addon
+--@end-debug@

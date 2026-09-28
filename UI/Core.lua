@@ -17,6 +17,7 @@ function addon.CorePanelMixin:OnLoad()
                 SettingsPanel:Open()
                 SettingsPanel:SelectCategory(addon.category, true)
             end
+            return true
         end
     _G["SLASH_"..addonName.."1"] = "/aba"
 end

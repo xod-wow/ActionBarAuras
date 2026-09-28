@@ -2,44 +2,6 @@ local _, addon = ...
 
 --[[--------------------------------------------------------------------------]]--
 
-local AuraDurationFormatter = C_StringUtil.CreateSecondsFormatter()
-AuraDurationFormatter:SetDefaultAbbreviation(Enum.SecondsFormatterAbbreviation.OneLetter)
-AuraDurationFormatter:SetMinInterval(Enum.SecondsFormatterInterval.Seconds)
-AuraDurationFormatter:SetDesiredUnitCount(1)
-AuraDurationFormatter:SetMillisecondsThreshold(3)
-AuraDurationFormatter:SetStripIntervalWhitespace(Enum.SecondsFormatterIntervalWhitespace.Strip)
-
-local AuraColorCurve = C_CurveUtil.CreateColorCurve()
-AuraColorCurve:SetType(Enum.LuaCurveType.Cosine)
-AuraColorCurve:AddPoint(0.0, CreateColor(1, 0.5, 0.5))
-AuraColorCurve:AddPoint(3.0, CreateColor(1, 1, 0.5))
-AuraColorCurve:AddPoint(10.0, CreateColor(1, 1, 1))
-
-local durationTextOptions = {
-    textFormatter = AuraDurationFormatter,
-    textColor = {
-        curve = AuraColorCurve,
-        property = Enum.DurationTextBindingProperty.RemainingDuration
-    }
-}
-
-local function InitializeAuraOverlay(f)
-    -- AuraButton is not managing the border, it's fixed, since we don't need
-    -- the color to change depending on auraData.dispelName.
-    f:SetDurationText(f.durationText, durationTextOptions)
-    f:SetApplicationCount(f.stacksText)
-    f:EnableMouse(false)
-end
-
-local function InitializeHighlightOverlay(f)
-    f:SetDurationText(f.durationText, durationTextOptions)
-    f:AddAuraShownAnimation(f.ProcLoop)
-    f:EnableMouse(false)
-end
-
-
---[[--------------------------------------------------------------------------]]--
-
 -- Notes about raid buffs.
 --
 -- Mostly they match 'HELPFUL|RAID' and canApplyAura=true.
@@ -65,10 +27,9 @@ local FilterDefinitions = {
         name = 'PLAYERBUFF',
         unit = 'player',
         templateNames = { 'ABAOverlayAuraTemplate' },
-        InitializeFrame =
+        StyleFrame =
             function (f)
-                InitializeAuraOverlay(f)
-                f.auraBorder:SetVertexColor(0, 0.7, 0, 0.5)
+                f:Style('buff')
             end,
         GetEnabled =
             function (spellID)
@@ -97,10 +58,9 @@ local FilterDefinitions = {
         name = 'TARGETDEBUFF',
         unit = 'target',
         templateNames = { 'ABAOverlayAuraTemplate' },
-        InitializeFrame =
+        StyleFrame =
             function (f)
-                InitializeAuraOverlay(f)
-                f.auraBorder:SetVertexColor(1, 0, 0, 0.5)
+                f:Style('debuff')
             end,
         GetEnabled =
             function (spellID)
@@ -125,7 +85,8 @@ local FilterDefinitions = {
         name = 'TARGETSTEAL',
         unit = 'target',
         templateNames = { 'ABAOverlayHighlightTemplate' },
-        InitializeFrame = InitializeHighlightOverlay,
+        StyleFrame =
+            function (f) f:Style() end,
         GetEnabled =
             function (spellID)
                 local canAssist = UnitCanAssist('player', 'target', true, true)
@@ -145,7 +106,8 @@ local FilterDefinitions = {
         name = 'TARGETSOOTHE',
         unit = 'target',
         templateNames = { 'ABAOverlayHighlightTemplate' },
-        InitializeFrame = InitializeHighlightOverlay,
+        StyleFrame =
+            function (f) f:Style() end,
         GetEnabled =
             function (spellID)
                 local canAssist = UnitCanAssist('player', 'target', true, true)
@@ -178,7 +140,12 @@ function AuraContainerManagerMixin:CreateAuraSlot()
         sortMethod = AuraContainerSortMethod.ExpirationOnly,
         sortDirection = AuraContainerSortDirection.Reverse,
         templateNames = fd.templateNames,
-        initializeFrame = function (f) fd.InitializeFrame(f, fd) end
+        initializeFrame =
+            function (f)
+                f:Initialize()
+                -- In 12.1.5 replace with GetAuraSlotFrame or GetAuraFrame
+                self.auraFrame = f
+            end
     }
     self.as = self.c:AddAuraSlot("ABA", "", options)
     PixelUtil.SetSize(self.as, self.button:GetSize())
@@ -228,6 +195,10 @@ function AuraContainerManagerMixin:UpdateFilters(spellID)
     end
 end
 
+function AuraContainerManagerMixin:Style()
+    self.fd.StyleFrame(self.auraFrame)
+end
+
 local function CreateAuraContainerManager(fd, button)
     local acm = CreateFromMixins(AuraContainerManagerMixin)
     acm:Initialize(fd, button)
@@ -273,5 +244,11 @@ function addon.ButtonManagerMixin:UpdateFilters()
     local spellID = self:GetActionSpellID()
     for _, auraContainerManager in pairs(self.acm) do
         auraContainerManager:UpdateFilters(spellID)
+    end
+end
+
+function addon.ButtonManagerMixin:Style()
+    for _, auraContainerManager in pairs(self.acm) do
+        auraContainerManager:Style()
     end
 end
