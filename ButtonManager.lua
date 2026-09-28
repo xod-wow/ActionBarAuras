@@ -65,7 +65,7 @@ local FilterDefinitions = {
         GetEnabled =
             function (spellID)
                 local canAssist = UnitCanAssist('player', 'target', true, true)
-                return canAssist
+                return canAssist == false
             end,
         GetFilters =
             function (spellID)
