@@ -24,15 +24,117 @@
                     <Anchor point="TOP" y="-50"/>
                 </Anchors>
             </Texture>
-            <FontString inherits="GameFontNormalMed2" text="Nothing here (yet)">
-                <Color r="0.5" g="1" b="0.5" />
+            <Texture parentKey="DemoButton">
+                <Size x="45" y="45" />
                 <Anchors>
-                    <Anchor point="CENTER" />
+                    <Anchor point="TOPRIGHT" x="-24" y="-72" />
+                </Anchors>
+            </Texture>
+        </Layer>
+    </Layers>
+    <Frames>
+        <Button parentKey="DemoOverlay" inherits="ABAOverlayBuffTemplate">
+            <Anchors>
+                <Anchor point="TOPLEFT" relativeKey="$parent.DemoButton" />
+                <Anchor point="BOTTOMRIGHT" relativeKey="$parent.DemoButton" />
+            </Anchors>
+        </Button>
+    </Frames>
+    <Layers>
+        <Layer level="ARTWORK">
+            <FontString parentKey="StacksHeader" inherits="GameFontNormalMed2" text="Stacks Count">
+                <Anchors>
+                    <Anchor point="TOPLEFT" x="7" y="-68" />
                 </Anchors>
             </FontString>
         </Layer>
     </Layers>
-
+    <Frames>
+        <CheckButton parentKey="StacksEnable" inherits="ABACheckButtonTemplate" text="Enable">
+            <Size x="24" y="24" />
+            <Anchors>
+                <Anchor point="TOPLEFT" relativeKey="$parent.StacksHeader" relativePoint="BOTTOMLEFT" x="8" y="-8" />
+            </Anchors>
+        </CheckButton>
+        <CheckButton parentKey="StacksFont" inherits="ABACheckButtonTemplate" text="Font">
+            <Size x="24" y="24" />
+            <Anchors>
+                <Anchor point="TOPLEFT" relativeKey="$parent.StacksEnable" relativePoint="BOTTOMLEFT" y="-8" />
+            </Anchors>
+        </CheckButton>
+        <CheckButton parentKey="StacksAnchor" inherits="ABACheckButtonTemplate" text="Anchor">
+            <Size x="24" y="24" />
+            <Anchors>
+                <Anchor point="TOPLEFT" relativeKey="$parent.StacksFont" relativePoint="BOTTOMLEFT" y="-8" />
+            </Anchors>
+        </CheckButton>
+    </Frames>
+    <Layers>
+        <Layer level="ARTWORK">
+            <FontString parentKey="DurationHeader" inherits="GameFontNormalMed2" text="Duration Timer">
+                <Anchors>
+                    <Anchor point="LEFT" relativeKey="$parent.StacksHeader" />
+                    <Anchor point="TOP" relativeKey="$parent.StacksAnchor" relativePoint="BOTTOM" y="-24" />
+                </Anchors>
+            </FontString>
+        </Layer>
+    </Layers>
+    <Frames>
+        <CheckButton parentKey="DurationEnable" inherits="ABACheckButtonTemplate" text="Enable">
+            <Size x="24" y="24" />
+            <Anchors>
+                <Anchor point="TOPLEFT" relativeKey="$parent.DurationHeader" relativePoint="BOTTOMLEFT" x="8" y="-8" />
+            </Anchors>
+        </CheckButton>
+        <CheckButton parentKey="DurationFont" inherits="ABACheckButtonTemplate" text="Font">
+            <Size x="24" y="24" />
+            <Anchors>
+                <Anchor point="TOPLEFT" relativeKey="$parent.DurationEnable" relativePoint="BOTTOMLEFT" y="-8" />
+            </Anchors>
+        </CheckButton>
+        <CheckButton parentKey="DurationAnchor" inherits="ABACheckButtonTemplate" text="Anchor">
+            <Size x="24" y="24" />
+            <Anchors>
+                <Anchor point="TOPLEFT" relativeKey="$parent.DurationFont" relativePoint="BOTTOMLEFT" y="-8" />
+            </Anchors>
+        </CheckButton>
+    </Frames>
+    <Layers>
+        <Layer level="ARTWORK">
+            <FontString parentKey="OverlayHeader" inherits="GameFontNormalMed2" text="Overlay Texture">
+                <Anchors>
+                    <Anchor point="LEFT" relativeKey="$parent.DurationHeader" />
+                    <Anchor point="TOP" relativeKey="$parent.DurationAnchor" relativePoint="BOTTOM" y="-24" />
+                </Anchors>
+            </FontString>
+        </Layer>
+    </Layers>
+    <Frames>
+        <CheckButton parentKey="OverlayEnable" inherits="ABACheckButtonTemplate" text="Enable">
+            <Size x="24" y="24" />
+            <Anchors>
+                <Anchor point="TOPLEFT" relativeKey="$parent.OverlayHeader" relativePoint="BOTTOMLEFT" x="8" y="-8" />
+            </Anchors>
+        </CheckButton>
+        <CheckButton parentKey="OverlayTexture" inherits="ABACheckButtonTemplate" text="Texture">
+            <Size x="24" y="24" />
+            <Anchors>
+                <Anchor point="TOPLEFT" relativeKey="$parent.OverlayEnable" relativePoint="BOTTOMLEFT" y="-8" />
+            </Anchors>
+        </CheckButton>
+        <CheckButton parentKey="OverlayBuffColor" inherits="ABACheckButtonTemplate" text="Buff Color">
+            <Size x="24" y="24" />
+            <Anchors>
+                <Anchor point="TOPLEFT" relativeKey="$parent.OverlayTexture" relativePoint="BOTTOMLEFT" y="-8" />
+            </Anchors>
+        </CheckButton>
+        <CheckButton parentKey="OverlayDeBuffColor" inherits="ABACheckButtonTemplate" text="Debuff Color">
+            <Size x="24" y="24" />
+            <Anchors>
+                <Anchor point="TOPLEFT" relativeKey="$parent.OverlayBuffColor" relativePoint="BOTTOMLEFT" y="-8" />
+            </Anchors>
+        </CheckButton>
+    </Frames>
 </Frame>
 
 </Ui>

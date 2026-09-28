@@ -1,0 +1,21 @@
+<Ui>
+
+<CheckButton name="ABACheckButtonTemplate" inherits="UICheckButtonArtTemplate" virtual="true">
+    <Size x="32" y="32" />
+    <ButtonText inherits="GameFontWhite" parentKey="Text">
+        <Anchors>
+            <Anchor point="LEFT" relativePoint="RIGHT" x="4" y="2" />
+        </Anchors>
+    </ButtonText>
+</CheckButton>
+
+<Button name="ABASelectButtonTemplate" virtual="true">
+    <HighlightTexture atlas="Options_List_Hover" />
+    <Layers>
+        <Layer level="BACKGROUND">
+            <Texture parentKey="SelectedTexture" atlas="Options_List_Active" setAllPoints="true" hidden="true" />
+        </Layer>
+    </Layers>
+</Button>
+
+</Ui>

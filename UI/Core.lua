@@ -4,9 +4,17 @@ local addonTitle = C_AddOns.GetAddOnTitle(addonName)
 
 addon.CorePanelMixin = {}
 
+function addon.CorePanelMixin:Refresh()
+    self.DemoOverlay:Style()
+end
+
 function addon.CorePanelMixin:OnLoad()
 
     self.Title:SetText(addonTitle)
+
+    self.DemoButton:SetTexture(135992)
+    self.DemoOverlay.durationText:SetText("2.6")
+    self.DemoOverlay.stacksText:SetText("2")
 
     addon.category = Settings.RegisterCanvasLayoutCategory(self, addonTitle)
     Settings.RegisterAddOnCategory(addon.category)
@@ -23,4 +31,5 @@ function addon.CorePanelMixin:OnLoad()
 end
 
 function addon.CorePanelMixin:OnShow()
+    self:Refresh()
 end
