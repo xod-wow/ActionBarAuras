@@ -38,11 +38,11 @@ function addon.OverlayAuraMixin:Initialize()
     self:EnableMouse(false)
 end
 
-function addon.OverlayAuraMixin:Style(colorKey)
+function addon.OverlayAuraMixin:Style()
     local p = addon.db.profile
     if p.overlay.enable then
         self.auraBorder:SetTexture(p.overlay.texture)
-        local c = p.overlay.color[colorKey]
+        local c = p.overlay.color[self.colorKey]
         self.auraBorder:SetVertexColor(c.r, c.g, c.b, c.a)
         self.auraBorder:Show()
     else

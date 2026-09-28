@@ -26,10 +26,10 @@ local FilterDefinitions = {
     {
         name = 'PLAYERBUFF',
         unit = 'player',
-        templateNames = { 'ABAOverlayAuraTemplate' },
+        templateNames = { 'ABAOverlayBuffTemplate' },
         StyleFrame =
             function (f)
-                f:Style('buff')
+                f:Style()
             end,
         GetEnabled =
             function (spellID)
@@ -42,7 +42,7 @@ local FilterDefinitions = {
             end,
         GetFilters =
             function (spellID)
-                local candidateFilters, filterString = { isHelpful = true}
+                local candidateFilters, filterString = { isHelpful = true }
                 if addon.IsRaidBuff(spellID) then
                     -- Note no 'RAID' on purpose (see commentary above).
                     filterString = 'HELPFUL|INCLUDE_NAME_PLATE_ONLY'
@@ -57,21 +57,15 @@ local FilterDefinitions = {
     {
         name = 'TARGETDEBUFF',
         unit = 'target',
-        templateNames = { 'ABAOverlayAuraTemplate' },
+        templateNames = { 'ABAOverlayDebuffTemplate' },
         StyleFrame =
             function (f)
-                f:Style('debuff')
+                f:Style()
             end,
         GetEnabled =
             function (spellID)
                 local canAssist = UnitCanAssist('player', 'target', true, true)
-                if addon.IsRaidBuff(spellID) then
-                    return false
-                elseif canAssist then
-                    return false
-                else
-                    return true
-                end
+                return canAssist
             end,
         GetFilters =
             function (spellID)

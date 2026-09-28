@@ -17,6 +17,18 @@
         </Layers>
     </Button>
 
+    <Button name="ABAOverlayBuffTemplate" inherits="ABAOverlayAuraTemplate" virtual="true">
+        <KeyValues>
+            <KeyValue key="colorKey" value="buff" type="string" />
+        </KeyValues>
+    </Button>
+
+    <Button name="ABAOverlayDebuffTemplate" inherits="ABAOverlayAuraTemplate" virtual="true">
+        <KeyValues>
+            <KeyValue key="colorKey" value="debuff" type="string" />
+        </KeyValues>
+    </Button>
+
     <Button name="ABAOverlayHighlightTemplate" virtual="true">
         <Mixins>
             <Mixin key="OverlayHighlightMixin" source="local" />
