@@ -21,11 +21,16 @@ end
 --[[--------------------------------------------------------------------------]]--
 
 
-local BadRestrictions = { 'Combat', 'Encounter', 'ChallengeMode', 'PvPMatch' }
+local BadRestrictions = {
+    Enum.AddOnRestrictionType.Combat,
+    Enum.AddOnRestrictionType.Encounter,
+    Enum.AddOnRestrictionType.ChallengeMode,
+    Enum.AddOnRestrictionType.PvPMatch,
+}
 
 local function IsModifyAllowed()
     for _, r in ipairs(BadRestrictions) do
-        if C_RestrictedActions.IsAddOnRestrictionActive(Enum.AddOnRestrictionType[r]) then
+        if C_RestrictedActions.IsAddOnRestrictionActive(r) then
             return false
         end
     end
@@ -75,10 +80,11 @@ local ScanLinkedSpellsEvents = {
     ['TRAIT_CONFIG_UPDATED'] = true,
 }
 
--- In 12.1.5 this will be handled natively by CustomAuraContainerTemplate
+-- In 12.1.5 the UNIT_ parts of this will be handled automatically
 local UpdateAllAurasEvents = {
     ['PLAYER_TARGET_CHANGED'] = true,
     ['UNIT_FACTION'] = true,
+    ['UNIT_FLAGS'] = true,
 }
 
 local function CreateButtonManager(button)
@@ -118,6 +124,8 @@ function addon.Controller:Initialize()
     self:UpdateOverlayFilters()
 end
 
+local needsStyle = false
+
 function addon.Controller:OnEvent(event, ...)
     if event == 'PLAYER_LOGIN' then
         self:Initialize()
@@ -128,23 +136,35 @@ function addon.Controller:OnEvent(event, ...)
         self:UpdateOverlayFilters()
     elseif event == 'PLAYER_TARGET_CHANGED' then
         self:UpdateOverlayFilters()
-    elseif event == 'UNIT_FACTION' then
+    elseif event == 'UNIT_FACTION' or event == 'UNIT_FLAGS' then
         -- Maybe what's fired when you get MC and previously attackable target
         -- becomes friendly?
         local unitToken = ...
         if unitToken == 'target' then
             self:UpdateOverlayFilters()
         end
+    elseif event == 'ADDON_RESTRICTION_STATE_CHANGED' then
+        -- local type, state = ...
+        if needsStyle and IsModifyAllowed() then
+            addon.Controller:StyleAllOverlays()
+            needsStyle = false
+        end
     end
 end
 
 function addon.OnOptionsChanged()
+    if IsModifyAllowed() then
+        addon.Controller:StyleAllOverlays()
+    else
+        needsStyle = true
+    end
     addon.Controller:UpdateOverlayFilters()
 end
 
 -- PLAYER_LOGIN is too late for creating AuraContainer during restrictions
 do
     addon.Controller:RegisterEvent('PLAYER_LOGIN')
+    addon.Controller:RegisterEvent('ADDON_RESTRICTION_STATE_CHANGED')
     addon.Controller:SetScript('OnEvent', addon.Controller.OnEvent)
     addon.Controller:CreateButtonManagers()
 end

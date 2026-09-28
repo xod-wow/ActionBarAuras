@@ -28,6 +28,7 @@ function addon.AbilitiesPanelMixin:SpellItemInitializer(button, elementData)
             function ()
                 addon.db.profile.abilities[self.spellID].linkedSpellIDs[info.spellID] = nil
                 self:RefreshAbility()
+                addon.OnOptionsChanged()
             end)
     end
 end
@@ -184,6 +185,7 @@ function addon.AbilitiesPanelMixin:RefreshAbility()
             if spellID then
                 addon.db.profile.abilities[self.spellID].linkedSpellIDs[spellID] = true
                 self:RefreshAbility()
+                addon.OnOptionsChanged()
             end
         end)
 end
