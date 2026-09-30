@@ -6,6 +6,8 @@ addon.CorePanelMixin = {}
 
 function addon.CorePanelMixin:Refresh()
     self.DemoOverlay:Style()
+    self.StacksFont:Setup(function (...) print(...) end, NumberFontNormal:GetFont())
+    self.DurationFont:Setup(function (...) print(...) end, NumberFontNormal:GetFont())
 end
 
 function addon.CorePanelMixin:OnLoad()

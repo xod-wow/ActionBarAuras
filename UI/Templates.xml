@@ -1,5 +1,7 @@
 <Ui>
 
+<Script file="Templates.lua" />
+
 <CheckButton name="ABACheckButtonTemplate" inherits="UICheckButtonArtTemplate" virtual="true">
     <Size x="32" y="32" />
     <ButtonText inherits="GameFontWhite" parentKey="Text">
@@ -10,6 +12,7 @@
 </CheckButton>
 
 <Button name="ABASelectButtonTemplate" virtual="true">
+    <Size y="32" />
     <HighlightTexture atlas="Options_List_Hover" />
     <Layers>
         <Layer level="BACKGROUND">
@@ -17,5 +20,44 @@
         </Layer>
     </Layers>
 </Button>
+
+<Frame name="ABASelectFontTemplate" virtual="true">
+    <Size y="32" />
+    <Mixins>
+        <Mixin key="SelectFontMixin" source="local" />
+    </Mixins>
+    <Layers>
+        <Layer level="ARTWORK">
+            <FontString inherits="GameFontHighlightMedium" parentKey="Label" text="Font">
+                <Anchors>
+                    <Anchor point="LEFT" x="4" y="2" />
+                </Anchors>
+            </FontString>
+        </Layer>
+    </Layers>
+    <Frames>
+        <DropdownButton parentKey="FileDropdown" inherits="WoWStyle2DropdownTemplate">
+            <Size x="256" y="22" />
+            <Anchors>
+                <Anchor point="LEFT" relativePoint="RIGHT" relativeKey="$parent.Label" x="8" />
+            </Anchors>
+            <KeyValues>
+                <KeyValue key="resizeToText" type="boolean" value="false"/>
+            </KeyValues>
+        </DropdownButton>
+        <Slider parentKey="SizeSlider" inherits="MinimalSliderTemplate" minValue="5" maxValue="45" defaultValue="12" valueStep="1">
+            <Size x="160" y="32" />
+            <Anchors>
+                <Anchor point="LEFT" relativeKey="$parent.FileDropdown" relativePoint="RIGHT" x="8" />
+            </Anchors>
+        </Slider>
+        <DropdownButton parentKey="FlagsDropdown" inherits="WoWStyle2DropdownTemplate">
+            <Size x="128" y="32" />
+            <Anchors>
+                <Anchor point="LEFT" relativeKey="$parent.SizeSlider" relativePoint="RIGHT" x="8" />
+            </Anchors>
+        </DropdownButton>
+    </Frames>
+</Frame>
 
 </Ui>
