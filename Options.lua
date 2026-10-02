@@ -8,7 +8,7 @@
 local _, addon = ...
 
 local fontFile, fontSize, fontFlags = NumberFontNormal:GetFont()
-fontSize = math.round(fontSize)
+fontSize = math.floor(fontSize + 0.5)
 
 local DefaultAbility = {
     enable = true,
