@@ -57,15 +57,16 @@
         </CheckButton>
         <Frame parentKey="StacksFont" inherits="ABASelectFontTemplate">
             <Anchors>
-                <Anchor point="TOPLEFT" relativeKey="$parent.StacksEnable" relativePoint="BOTTOMLEFT" y="-8" />
-                <Anchor point="RIGHT" x="-8" />
+                <Anchor point="TOPLEFT" relativeKey="$parent.StacksEnable" relativePoint="BOTTOMLEFT" y="-2" />
+                <Anchor point="RIGHT" x="-128" />
             </Anchors>
         </Frame>
-        <CheckButton parentKey="StacksAnchor" inherits="ABACheckButtonTemplate" text="Anchor">
+        <Frame parentKey="StacksAnchor" inherits="ABASelectAnchorTemplate">
             <Anchors>
                 <Anchor point="TOPLEFT" relativeKey="$parent.StacksFont" relativePoint="BOTTOMLEFT" y="-8" />
+                <Anchor point="RIGHT" x="-128" />
             </Anchors>
-        </CheckButton>
+        </Frame>
     </Frames>
     <Layers>
         <Layer level="ARTWORK">
@@ -85,15 +86,16 @@
         </CheckButton>
         <Frame parentKey="DurationFont" inherits="ABASelectFontTemplate">
             <Anchors>
-                <Anchor point="TOPLEFT" relativeKey="$parent.DurationEnable" relativePoint="BOTTOMLEFT" y="-8" />
-                <Anchor point="RIGHT" x="-8" />
+                <Anchor point="TOPLEFT" relativeKey="$parent.DurationEnable" relativePoint="BOTTOMLEFT" y="-2" />
+                <Anchor point="RIGHT" x="-128" />
             </Anchors>
         </Frame>
-        <CheckButton parentKey="DurationAnchor" inherits="ABACheckButtonTemplate" text="Anchor">
+        <Frame parentKey="DurationAnchor" inherits="ABASelectAnchorTemplate">
             <Anchors>
                 <Anchor point="TOPLEFT" relativeKey="$parent.DurationFont" relativePoint="BOTTOMLEFT" y="-8" />
+                <Anchor point="RIGHT" x="-128" />
             </Anchors>
-        </CheckButton>
+        </Frame>
     </Frames>
     <Layers>
         <Layer level="ARTWORK">

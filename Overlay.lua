@@ -49,19 +49,17 @@ function addon.OverlayAuraMixin:Style()
         self.auraBorder:Hide()
     end
     if p.duration.enable then
-        self.stacksText:SetFontObject(_G[p.duration.font])
-        local anchor = p.duration.anchor
+        self.durationText:SetFont(p.duration.fontFile, p.duration.fontSize, p.duration.fontFlags)
         self.durationText:ClearAllPoints()
-        self.durationText:SetPoint(anchor.point, self, anchor.point, anchor.x, anchor.y)
+        self.durationText:SetPoint(p.duration.point, self, p.duration.point, p.duration.x, p.duration.y)
         self.durationText:Show()
     else
         self.durationText:Hide()
     end
     if p.stacks.enable then
-        self.stacksText:SetFontObject(_G[p.stacks.font])
-        local anchor = p.stacks.anchor
+        self.stacksText:SetFont(p.stacks.fontFile, p.stacks.fontSize, p.stacks.fontFlags)
         self.stacksText:ClearAllPoints()
-        self.stacksText:SetPoint(anchor.point, self, anchor.point, anchor.x, anchor.y)
+        self.stacksText:SetPoint(p.stacks.point, self, p.stacks.point, p.stacks.x, p.stacks.y)
         self.stacksText:Show()
     else
         self.stacksText:Hide()
@@ -82,10 +80,9 @@ end
 function addon.OverlayHighlightMixin:Style()
     local p = addon.db.profile
     if p.duration.enable then
-        self.stacksText:SetFontObject(_G[p.duration.font])
-        local anchor = p.duration.anchor
+        self.durationText:SetFont(p.stacks.fontFile, p.stacks.fontSize, p.stacks.fontFlags)
         self.durationText:ClearAllPoints()
-        self.durationText:SetPoint(anchor.point, self, anchor.point, anchor.x, anchor.y)
+        self.durationText:SetPoint(p.stacks.point, self, p.stacks.point, p.stacks.x, p.stacks.y)
         self.durationText:Show()
     else
         self.durationText:Hide()

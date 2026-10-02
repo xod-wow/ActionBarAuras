@@ -7,7 +7,8 @@
 
 local _, addon = ...
 
--- local fontPath, fontSize, fontFlags = NumberFontNormal:GetFont()
+local fontFile, fontSize, fontFlags = NumberFontNormal:GetFont()
+fontSize = math.round(fontSize)
 
 local DefaultAbility = {
     enable = true,
@@ -27,13 +28,21 @@ local defaults = {
         },
         duration = {
             enable = true,
-            font = "NumberFontNormal",
-            anchor = { point="BOTTOMLEFT", x=3, y=3 },
+            fontFile = fontFile,
+            fontSize = fontSize,
+            fontFlags = fontFlags,
+            point="BOTTOMLEFT",
+            x=3,
+            y=3,
         },
         stacks = {
             enable = true,
-            font = "NumberFontNormal",
-            anchor = { point="TOPLEFT", x=3, y=-3 },
+            fontFile = fontFile,
+            fontSize = fontSize,
+            fontFlags = fontFlags,
+            point="TOPLEFT",
+            x=3,
+            y=-3,
         },
         abilities = {
             ['*'] = DefaultAbility,

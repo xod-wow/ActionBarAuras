@@ -4,10 +4,44 @@ local addonTitle = C_AddOns.GetAddOnTitle(addonName)
 
 addon.CorePanelMixin = {}
 
-function addon.CorePanelMixin:Refresh()
+function addon.CorePanelMixin:Setup()
+    local p = addon.db.profile
+
     self.DemoOverlay:Style()
-    self.StacksFont:Setup(function (...) print(...) end, NumberFontNormal:GetFont())
-    self.DurationFont:Setup(function (...) print(...) end, NumberFontNormal:GetFont())
+
+    local function SetStacksAnchor(point, x, y)
+        p.stacks.point = point
+        p.stacks.x = x
+        p.stacks.y = y
+        self.DemoOverlay:Style()
+    end
+
+    local function SetStacksFont(fontFile, fontSize, fontFlags)
+        p.stacks.fontFile = fontFile
+        p.stacks.fontSize = fontSize
+        p.stacks.fontFlags = fontFlags
+        self.DemoOverlay:Style()
+    end
+
+    self.StacksFont:Setup(SetStacksFont, p.stacks.fontFile, p.stacks.fontSize, p.stacks.fontFlags)
+    self.StacksAnchor:Setup(SetStacksAnchor, p.stacks.point, p.stacks.x, p.stacks.y)
+
+    local function SetDurationAnchor(point, x, y)
+        p.duration.point = point
+        p.duration.x = x
+        p.duration.y = y
+        self.DemoOverlay:Style()
+    end
+
+    local function SetDurationFont(fontFile, fontSize, fontFlags)
+        p.duration.fontFile = fontFile
+        p.duration.fontSize = fontSize
+        p.duration.fontFlags = fontFlags
+        self.DemoOverlay:Style()
+    end
+
+    self.DurationFont:Setup(SetDurationFont, p.duration.fontFile, p.duration.fontSize, p.duration.fontFlags)
+    self.DurationAnchor:Setup(SetDurationAnchor, p.duration.point, p.duration.x, p.duration.y)
 end
 
 function addon.CorePanelMixin:OnLoad()
@@ -33,5 +67,5 @@ function addon.CorePanelMixin:OnLoad()
 end
 
 function addon.CorePanelMixin:OnShow()
-    self:Refresh()
+    self:Setup()
 end
