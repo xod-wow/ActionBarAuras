@@ -63,7 +63,7 @@
         </Frame>
         <Frame parentKey="StacksAnchor" inherits="ABASelectAnchorTemplate">
             <Anchors>
-                <Anchor point="TOPLEFT" relativeKey="$parent.StacksFont" relativePoint="BOTTOMLEFT" y="-8" />
+                <Anchor point="TOPLEFT" relativeKey="$parent.StacksFont" relativePoint="BOTTOMLEFT" />
                 <Anchor point="RIGHT" x="-128" />
             </Anchors>
         </Frame>
@@ -92,7 +92,7 @@
         </Frame>
         <Frame parentKey="DurationAnchor" inherits="ABASelectAnchorTemplate">
             <Anchors>
-                <Anchor point="TOPLEFT" relativeKey="$parent.DurationFont" relativePoint="BOTTOMLEFT" y="-8" />
+                <Anchor point="TOPLEFT" relativeKey="$parent.DurationFont" relativePoint="BOTTOMLEFT" />
                 <Anchor point="RIGHT" x="-128" />
             </Anchors>
         </Frame>

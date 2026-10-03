@@ -23,8 +23,13 @@
 
 <Slider name="ABASliderWithThumbTextTemplate" inherits="MinimalSliderTemplate" virtual="true">
     <KeyValues>
-        <KeyValue key="valueTextTemplate" value="FONT_SIZE_TEMPLATE" type="global" />
+        <KeyValue key="valueTextTemplate" value="%0.1f" type="string" />
     </KeyValues>
+    <Scripts>
+        <OnValueChanged>
+            self.ValueText:SetFormattedText(self.valueTextTemplate, value)
+        </OnValueChanged>
+    </Scripts>
     <Layers>
         <Layer level="OVERLAY">
             <FontString parentKey="ValueText" inherits="GameFontNormalSmall">
@@ -69,6 +74,9 @@
         </DropdownButton>
         <Slider parentKey="SizeSlider" inherits="ABASliderWithThumbTextTemplate" valueStep="1">
             <Size x="392" y="32" />
+            <KeyValues>
+                <KeyValue key="valueTextTemplate" value="FONT_SIZE_TEMPLATE" type="global" />
+            </KeyValues>
             <Anchors>
                 <Anchor point="TOPLEFT" relativeKey="$parent.FileDropdown" relativePoint="BOTTOMLEFT" y="-8" />
             </Anchors>

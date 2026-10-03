@@ -6,6 +6,18 @@ addon.SelectFontMixin = {}
 
 local LSM = LibStub("LibSharedMedia-3.0")
 
+local lsmFontObjects = {}
+
+local function GetLSMFontObject(fontName, size)
+    if not lsmFontObjects[fontName] then
+        local fo = CreateFont("ABAFont"..fontName..size)
+        local fontFile = LSM:Fetch('font', fontName)
+        fo:SetFont(fontFile, size, "OUTLINE")
+        lsmFontObjects[fontName] = fo
+    end
+    return lsmFontObjects[fontName]
+end
+
 local function FontFileMenuGenerate(owner, rootDescription)
     local self = owner:GetParent()
     local fontList = LSM:List('font')
@@ -18,7 +30,13 @@ local function FontFileMenuGenerate(owner, rootDescription)
     end
     for _, fontName in ipairs(fontList) do
         local fontFile = LSM:Fetch('font', fontName)
-        rootDescription:CreateRadio(fontName, IsSelected, SetSelected, fontFile)
+        local radio = rootDescription:CreateRadio(fontName, IsSelected, SetSelected, fontFile)
+        radio:AddInitializer(
+            function(button, description, menu)
+                local size = button.fontString:GetFontHeight()
+                local fo = GetLSMFontObject(fontName, size)
+                button.fontString:SetFontObject(fo)
+            end)
     end
 end
 
@@ -59,9 +77,8 @@ function addon.SelectFontMixin:Setup(callback, fontFile, fontSize, fontFlags)
 end
 
 function addon.SelectFontMixin:OnLoad()
-    self.SizeSlider:SetScript('OnValueChanged',
+    self.SizeSlider:HookScript('OnValueChanged',
         function (slider, value, userInput)
-            slider.ValueText:SetFormattedText(slider.valueTextTemplate, value)
             if userInput then
                 self.fontSize = value
                 self:Trigger()
@@ -117,17 +134,15 @@ function addon.SelectAnchorMixin:Setup(callback, anchorPoint, xOffset, yOffset)
 end
 
 function addon.SelectAnchorMixin:OnLoad()
-    self.XSlider:SetScript('OnValueChanged',
+    self.XSlider:HookScript('OnValueChanged',
         function (slider, value, userInput)
-            slider.ValueText:SetFormattedText(slider.valueTextTemplate, value)
             if userInput then
                 self.xOffset = value
                 self:Trigger()
             end
         end)
-    self.YSlider:SetScript('OnValueChanged',
+    self.YSlider:HookScript('OnValueChanged',
         function (slider, value, userInput)
-            slider.ValueText:SetFormattedText(slider.valueTextTemplate, value)
             if userInput then
                 self.yOffset = value
                 self:Trigger()

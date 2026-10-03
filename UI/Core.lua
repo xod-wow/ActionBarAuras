@@ -14,6 +14,7 @@ function addon.CorePanelMixin:Setup()
         p.stacks.x = x
         p.stacks.y = y
         self.DemoOverlay:Style()
+        addon.OnOptionsChanged()
     end
 
     local function SetStacksFont(fontFile, fontSize, fontFlags)
@@ -21,7 +22,16 @@ function addon.CorePanelMixin:Setup()
         p.stacks.fontSize = fontSize
         p.stacks.fontFlags = fontFlags
         self.DemoOverlay:Style()
+        addon.OnOptionsChanged()
     end
+
+    self.StacksEnable:SetChecked(p.stacks.enable)
+    self.StacksEnable:SetScript('OnClick',
+        function (checkButton)
+            p.stacks.enable = checkButton:GetChecked()
+            self.DemoOverlay:Style()
+            addon.OnOptionsChanged()
+        end)
 
     self.StacksFont:Setup(SetStacksFont, p.stacks.fontFile, p.stacks.fontSize, p.stacks.fontFlags)
     self.StacksAnchor:Setup(SetStacksAnchor, p.stacks.point, p.stacks.x, p.stacks.y)
@@ -31,6 +41,7 @@ function addon.CorePanelMixin:Setup()
         p.duration.x = x
         p.duration.y = y
         self.DemoOverlay:Style()
+        addon.OnOptionsChanged()
     end
 
     local function SetDurationFont(fontFile, fontSize, fontFlags)
@@ -38,7 +49,16 @@ function addon.CorePanelMixin:Setup()
         p.duration.fontSize = fontSize
         p.duration.fontFlags = fontFlags
         self.DemoOverlay:Style()
+        addon.OnOptionsChanged()
     end
+
+    self.DurationEnable:SetChecked(p.duration.enable)
+    self.DurationEnable:SetScript('OnClick',
+        function (checkButton)
+            p.duration.enable = checkButton:GetChecked()
+            self.DemoOverlay:Style()
+            addon.OnOptionsChanged()
+        end)
 
     self.DurationFont:Setup(SetDurationFont, p.duration.fontFile, p.duration.fontSize, p.duration.fontFlags)
     self.DurationAnchor:Setup(SetDurationAnchor, p.duration.point, p.duration.x, p.duration.y)
