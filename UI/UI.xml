@@ -1,4 +1,5 @@
 <Ui>
+    <Include file="Templates.xml" />
     <Include file="Core.xml" />
     <Include file="Abilities.xml" />
 </Ui>

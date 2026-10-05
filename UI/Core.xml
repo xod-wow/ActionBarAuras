@@ -24,12 +24,140 @@
                     <Anchor point="TOP" y="-50"/>
                 </Anchors>
             </Texture>
-            <FontString inherits="GameFontNormalMed2" text="Nothing here (yet)">
-                <Color r="0.5" g="1" b="0.5" />
+            <Texture parentKey="DemoButton">
+                <Size x="45" y="45" />
                 <Anchors>
-                    <Anchor point="CENTER" />
+                    <Anchor point="TOPRIGHT" x="-24" y="-72" />
+                </Anchors>
+            </Texture>
+        </Layer>
+    </Layers>
+    <Frames>
+        <Button parentKey="DemoOverlay" inherits="ABAOverlayBuffTemplate">
+            <Anchors>
+                <Anchor point="TOPLEFT" relativeKey="$parent.DemoButton" />
+                <Anchor point="BOTTOMRIGHT" relativeKey="$parent.DemoButton" />
+            </Anchors>
+        </Button>
+    </Frames>
+    <Layers>
+        <Layer level="ARTWORK">
+            <FontString parentKey="StacksHeader" inherits="GameFontNormalMed2" text="Stacks Count">
+                <Anchors>
+                    <Anchor point="TOPLEFT" x="7" y="-68" />
                 </Anchors>
             </FontString>
+        </Layer>
+    </Layers>
+    <Frames>
+        <CheckButton parentKey="StacksEnable" inherits="ABACheckButtonTemplate" text="Enable">
+            <Anchors>
+                <Anchor point="TOPLEFT" relativeKey="$parent.StacksHeader" relativePoint="BOTTOMLEFT" x="8" y="-8" />
+            </Anchors>
+        </CheckButton>
+        <Frame parentKey="StacksFont" inherits="ABASelectFontTemplate">
+            <Anchors>
+                <Anchor point="TOPLEFT" relativeKey="$parent.StacksEnable" relativePoint="BOTTOMLEFT" y="-2" />
+                <Anchor point="RIGHT" x="-128" />
+            </Anchors>
+        </Frame>
+        <Frame parentKey="StacksAnchor" inherits="ABASelectAnchorTemplate">
+            <Anchors>
+                <Anchor point="TOPLEFT" relativeKey="$parent.StacksFont" relativePoint="BOTTOMLEFT" />
+                <Anchor point="RIGHT" x="-128" />
+            </Anchors>
+        </Frame>
+    </Frames>
+    <Layers>
+        <Layer level="ARTWORK">
+            <FontString parentKey="DurationHeader" inherits="GameFontNormalMed2" text="Duration Timer">
+                <Anchors>
+                    <Anchor point="LEFT" relativeKey="$parent.StacksHeader" />
+                    <Anchor point="TOP" relativeKey="$parent.StacksAnchor" relativePoint="BOTTOM" y="-24" />
+                </Anchors>
+            </FontString>
+        </Layer>
+    </Layers>
+    <Frames>
+        <CheckButton parentKey="DurationEnable" inherits="ABACheckButtonTemplate" text="Enable">
+            <Anchors>
+                <Anchor point="TOPLEFT" relativeKey="$parent.DurationHeader" relativePoint="BOTTOMLEFT" x="8" y="-8" />
+            </Anchors>
+        </CheckButton>
+        <Frame parentKey="DurationFont" inherits="ABASelectFontTemplate">
+            <Anchors>
+                <Anchor point="TOPLEFT" relativeKey="$parent.DurationEnable" relativePoint="BOTTOMLEFT" y="-2" />
+                <Anchor point="RIGHT" x="-128" />
+            </Anchors>
+        </Frame>
+        <Frame parentKey="DurationAnchor" inherits="ABASelectAnchorTemplate">
+            <Anchors>
+                <Anchor point="TOPLEFT" relativeKey="$parent.DurationFont" relativePoint="BOTTOMLEFT" />
+                <Anchor point="RIGHT" x="-128" />
+            </Anchors>
+        </Frame>
+    </Frames>
+    <Layers>
+        <Layer level="ARTWORK">
+            <FontString parentKey="OverlayHeader" inherits="GameFontNormalMed2" text="Overlay Texture">
+                <Anchors>
+                    <Anchor point="LEFT" relativeKey="$parent.DurationHeader" />
+                    <Anchor point="TOP" relativeKey="$parent.DurationAnchor" relativePoint="BOTTOM" y="-24" />
+                </Anchors>
+            </FontString>
+        </Layer>
+    </Layers>
+    <Frames>
+        <CheckButton parentKey="OverlayEnable" inherits="ABACheckButtonTemplate" text="Enable">
+            <Anchors>
+                <Anchor point="TOPLEFT" relativeKey="$parent.OverlayHeader" relativePoint="BOTTOMLEFT" x="8" y="-8" />
+            </Anchors>
+        </CheckButton>
+        <EditBox autoFocus="false" inherits="InputBoxTemplate" parentKey="OverlayTexture">
+            <Size x="300" y="22"/>
+            <Anchors>
+                <Anchor point="TOPLEFT" relativeKey="$parent.OverlayEnable" relativePoint="BOTTOMLEFT" x="60" y="-8" />
+            </Anchors>
+            <FontString inherits="ChatFontNormal" justifyH="LEFT"/>
+            <Layers>
+                <Layer level="ARTWORK">
+                    <FontString inherits="GameFontHighlight" justifyH="RIGHT" text="Texture">
+                        <Anchors>
+                            <Anchor point="RIGHT" relativePoint="LEFT" x="-12" />
+                        </Anchors>
+                    </FontString>
+                </Layer>
+            </Layers>
+        </EditBox>
+    </Frames>
+    <Layers>
+        <Layer level="BACKGROUND">
+            <Texture>
+                <Anchors>
+                    <Anchor point="TOPLEFT" relativeKey="$parent.StacksEnable" x="-4" y="4" />
+                    <Anchor point="BOTTOMRIGHT" relativeKey="$parent.StacksAnchor" x="4" y="-4" />
+                </Anchors>
+                <Color r="0" g="0" b="0" a="0.4" />
+            </Texture>
+        </Layer>
+        <Layer level="BACKGROUND">
+            <Texture>
+                <Anchors>
+                    <Anchor point="TOPLEFT" relativeKey="$parent.DurationEnable" x="-4" y="4" />
+                    <Anchor point="BOTTOMRIGHT" relativeKey="$parent.DurationAnchor" x="4" y="-4" />
+                </Anchors>
+                <Color r="0" g="0" b="0" a="0.4" />
+            </Texture>
+        </Layer>
+        <Layer level="BACKGROUND">
+            <Texture>
+                <Anchors>
+                    <Anchor point="TOPLEFT" relativeKey="$parent.OverlayEnable" x="-4" y="4" />
+                    <Anchor point="RIGHT" relativeKey="$parent.DurationAnchor" x="4" />
+                    <Anchor point="BOTTOM" relativeKey="$parent.OverlayTexture" y="-12" />
+                </Anchors>
+                <Color r="0" g="0" b="0" a="0.4" />
+            </Texture>
         </Layer>
     </Layers>
 

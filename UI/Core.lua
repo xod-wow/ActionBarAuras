@@ -4,9 +4,94 @@ local addonTitle = C_AddOns.GetAddOnTitle(addonName)
 
 addon.CorePanelMixin = {}
 
+function addon.CorePanelMixin:Setup()
+    local p = addon.db.profile
+
+    self.DemoOverlay:Style()
+
+    local function SetStacksAnchor(point, x, y)
+        p.stacks.point = point
+        p.stacks.x = x
+        p.stacks.y = y
+        self.DemoOverlay:Style()
+        addon.OnOptionsChanged()
+    end
+
+    local function SetStacksFont(fontFile, fontSize, fontFlags)
+        p.stacks.fontFile = fontFile
+        p.stacks.fontSize = fontSize
+        p.stacks.fontFlags = fontFlags
+        self.DemoOverlay:Style()
+        addon.OnOptionsChanged()
+    end
+
+    self.StacksEnable:SetChecked(p.stacks.enable)
+    self.StacksEnable:SetScript('OnClick',
+        function (checkButton)
+            p.stacks.enable = checkButton:GetChecked()
+            self.DemoOverlay:Style()
+            addon.OnOptionsChanged()
+        end)
+
+    self.StacksFont:Setup(SetStacksFont, p.stacks.fontFile, p.stacks.fontSize, p.stacks.fontFlags)
+    self.StacksAnchor:Setup(SetStacksAnchor, p.stacks.point, p.stacks.x, p.stacks.y)
+
+    local function SetDurationAnchor(point, x, y)
+        p.duration.point = point
+        p.duration.x = x
+        p.duration.y = y
+        self.DemoOverlay:Style()
+        addon.OnOptionsChanged()
+    end
+
+    local function SetDurationFont(fontFile, fontSize, fontFlags)
+        p.duration.fontFile = fontFile
+        p.duration.fontSize = fontSize
+        p.duration.fontFlags = fontFlags
+        self.DemoOverlay:Style()
+        addon.OnOptionsChanged()
+    end
+
+    self.DurationEnable:SetChecked(p.duration.enable)
+    self.DurationEnable:SetScript('OnClick',
+        function (checkButton)
+            p.duration.enable = checkButton:GetChecked()
+            self.DemoOverlay:Style()
+            addon.OnOptionsChanged()
+        end)
+
+    self.DurationFont:Setup(SetDurationFont, p.duration.fontFile, p.duration.fontSize, p.duration.fontFlags)
+    self.DurationAnchor:Setup(SetDurationAnchor, p.duration.point, p.duration.x, p.duration.y)
+
+    self.OverlayEnable:SetChecked(p.overlay.enable)
+    self.OverlayEnable:SetScript('OnClick',
+        function (checkButton)
+            p.overlay.enable = checkButton:GetChecked()
+            self.DemoOverlay:Style()
+            addon.OnOptionsChanged()
+        end)
+
+    self.OverlayTexture:SetText(p.overlay.texture)
+    self.OverlayTexture:SetScript('OnEnterPressed',
+        function (editBox)
+            local tex = editBox:GetText()
+            if tex == "" then
+                tex = addon.defaults.profile.overlay.texture
+                editBox:SetText(tex)
+            end
+            p.overlay.texture = tex
+            self.DemoOverlay:Style()
+            addon.OnOptionsChanged()
+        end)
+end
+
 function addon.CorePanelMixin:OnLoad()
 
     self.Title:SetText(addonTitle)
+
+    self.DemoButton:SetTexture(135992)
+    self.DemoOverlay.durationText:SetText("2.6")
+    self.DemoOverlay.stacksText:SetText("3")
 
     addon.category = Settings.RegisterCanvasLayoutCategory(self, addonTitle)
     Settings.RegisterAddOnCategory(addon.category)
@@ -23,4 +108,5 @@ function addon.CorePanelMixin:OnLoad()
 end
 
 function addon.CorePanelMixin:OnShow()
+    self:Setup()
 end

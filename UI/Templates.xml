@@ -1,0 +1,144 @@
+<Ui>
+
+<Script file="Templates.lua" />
+
+<CheckButton name="ABACheckButtonTemplate" inherits="UICheckButtonArtTemplate" virtual="true">
+    <Size x="32" y="32" />
+    <ButtonText inherits="GameFontWhite" parentKey="Text">
+        <Anchors>
+            <Anchor point="LEFT" relativePoint="RIGHT" x="4" y="2" />
+        </Anchors>
+    </ButtonText>
+</CheckButton>
+
+<Button name="ABASelectButtonTemplate" virtual="true">
+    <Size y="32" />
+    <HighlightTexture atlas="Options_List_Hover" />
+    <Layers>
+        <Layer level="BACKGROUND">
+            <Texture parentKey="SelectedTexture" atlas="Options_List_Active" setAllPoints="true" hidden="true" />
+        </Layer>
+    </Layers>
+</Button>
+
+<Slider name="ABASliderWithThumbTextTemplate" inherits="MinimalSliderTemplate" virtual="true">
+    <KeyValues>
+        <KeyValue key="valueTextTemplate" value="%0.1f" type="string" />
+    </KeyValues>
+    <Scripts>
+        <OnValueChanged>
+            self.ValueText:SetFormattedText(self.valueTextTemplate, value)
+        </OnValueChanged>
+    </Scripts>
+    <Layers>
+        <Layer level="OVERLAY">
+            <FontString parentKey="ValueText" inherits="GameFontNormalSmall">
+                <Anchors>
+                    <Anchor point="BOTTOM" relativePoint="TOP" relativeKey="$parent.Thumb" y="2" />
+                </Anchors>
+            </FontString>
+        </Layer>
+    </Layers>
+</Slider>
+
+<Frame name="ABASelectFontTemplate" virtual="true">
+    <Size y="80" />
+    <Mixins>
+        <Mixin key="SelectFontMixin" source="local" />
+    </Mixins>
+    <Scripts>
+        <OnLoad method="OnLoad" />
+    </Scripts>
+    <Frames>
+        <DropdownButton parentKey="FileDropdown" inherits="WoWStyle2DropdownTemplate">
+            <Size x="256" y="32" />
+            <Anchors>
+                <Anchor point="TOPLEFT" y="-4" x="64" />
+            </Anchors>
+            <KeyValues>
+                <KeyValue key="resizeToText" type="boolean" value="false"/>
+            </KeyValues>
+        </DropdownButton>
+        <DropdownButton parentKey="FlagsDropdown" inherits="WoWStyle2DropdownTemplate">
+            <Size x="128" y="32" />
+            <Anchors>
+                <Anchor point="LEFT" relativeKey="$parent.FileDropdown" relativePoint="RIGHT" x="8" />
+            </Anchors>
+        </DropdownButton>
+        <Slider parentKey="SizeSlider" inherits="ABASliderWithThumbTextTemplate" valueStep="1">
+            <Size x="392" y="32" />
+            <KeyValues>
+                <KeyValue key="valueTextTemplate" value="FONT_SIZE_TEMPLATE" type="global" />
+            </KeyValues>
+            <Anchors>
+                <Anchor point="TOPLEFT" relativeKey="$parent.FileDropdown" relativePoint="BOTTOMLEFT" y="-8" />
+            </Anchors>
+        </Slider>
+    </Frames>
+    <Layers>
+        <Layer level="ARTWORK">
+            <FontString inherits="GameFontHighlight" text="Font">
+                <Anchors>
+                    <Anchor point="RIGHT" relativePoint="LEFT" relativeKey="$parent.FileDropdown" x="-8" />
+                </Anchors>
+            </FontString>
+        </Layer>
+    </Layers>
+</Frame>
+
+<Frame name="ABASelectAnchorTemplate" virtual="true">
+    <Size y="44" />
+    <Mixins>
+        <Mixin key="SelectAnchorMixin" source="local" />
+    </Mixins>
+    <Scripts>
+        <OnLoad method="OnLoad" />
+    </Scripts>
+    <Frames>
+        <DropdownButton parentKey="PointDropdown" inherits="WoWStyle2DropdownTemplate">
+            <Size x="128" y="32" />
+            <Anchors>
+                <Anchor point="TOPLEFT" y="-4" x="64" />
+            </Anchors>
+        </DropdownButton>
+        <Slider parentKey="XSlider" inherits="ABASliderWithThumbTextTemplate" valueStep="1">
+            <Size x="128" y="32" />
+            <KeyValues>
+                <KeyValue key="valueTextTemplate" value="%d" type="string" />
+            </KeyValues>
+            <Anchors>
+                <Anchor point="LEFT" relativeKey="$parent.PointDropdown" relativePoint="RIGHT" x="12" />
+            </Anchors>
+        </Slider>
+        <Slider parentKey="YSlider" inherits="ABASliderWithThumbTextTemplate" valueStep="1">
+            <Size x="128" y="32" />
+            <KeyValues>
+                <KeyValue key="valueTextTemplate" value="%d" type="string" />
+            </KeyValues>
+            <Anchors>
+                <Anchor point="LEFT" relativeKey="$parent.XSlider" relativePoint="RIGHT" x="12" />
+            </Anchors>
+        </Slider>
+    </Frames>
+    <Layers>
+        <Layer level="ARTWORK">
+            <FontString inherits="GameFontHighlight" text="Position">
+                <Anchors>
+                    <Anchor point="RIGHT" relativePoint="LEFT" relativeKey="$parent.PointDropdown" x="-8" />
+                </Anchors>
+            </FontString>
+            <FontString inherits="GameFontHighlightSmall" text="Horizontal Offset">
+                <Anchors>
+                    <Anchor point="BOTTOM" relativeKey="$parent.XSlider" y="-4" />
+                </Anchors>
+            </FontString>
+            <FontString inherits="GameFontHighlightSmall" text="Vertical Offset">
+                <Anchors>
+                    <Anchor point="BOTTOM" relativeKey="$parent.YSlider" y="-4" />
+                </Anchors>
+            </FontString>
+        </Layer>
+    </Layers>
+</Frame>
+
+</Ui>

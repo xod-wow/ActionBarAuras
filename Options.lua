@@ -7,7 +7,8 @@
 
 local _, addon = ...
 
--- local fontPath, fontSize, fontFlags = NumberFontNormal:GetFont()
+local fontFile, fontSize, fontFlags = NumberFontNormal:GetFont()
+fontSize = math.floor(fontSize + 0.5)
 
 local DefaultAbility = {
     enable = true,
@@ -15,7 +16,7 @@ local DefaultAbility = {
     linkedSpellIDs = { },
 }
 
-local defaults = {
+addon.defaults = {
     profile = {
         overlay = {
             enable = true,
@@ -27,13 +28,21 @@ local defaults = {
         },
         duration = {
             enable = true,
-            font = "NumberFontNormal",
-            anchor = { point="BOTTOMLEFT", x=3, y=3 },
+            fontFile = fontFile,
+            fontSize = fontSize,
+            fontFlags = fontFlags,
+            point="BOTTOMLEFT",
+            x=3,
+            y=3,
         },
         stacks = {
             enable = true,
-            font = "NumberFontNormal",
-            anchor = { point="TOPLEFT", x=3, y=-3 },
+            fontFile = fontFile,
+            fontSize = fontSize,
+            fontFlags = fontFlags,
+            point="TOPLEFT",
+            x=3,
+            y=-3,
         },
         abilities = {
             ['*'] = DefaultAbility,
@@ -42,5 +51,5 @@ local defaults = {
 }
 
 function addon.InitializeOptions()
-    addon.db = LibStub("AceDB-3.0"):New("ActionBarAurasDB", defaults, true)
+    addon.db = LibStub("AceDB-3.0"):New("ActionBarAurasDB", addon.defaults, true)
 end
