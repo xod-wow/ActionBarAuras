@@ -16,7 +16,7 @@ local DefaultAbility = {
     linkedSpellIDs = { },
 }
 
-local defaults = {
+addon.defaults = {
     profile = {
         overlay = {
             enable = true,
@@ -51,5 +51,5 @@ local defaults = {
 }
 
 function addon.InitializeOptions()
-    addon.db = LibStub("AceDB-3.0"):New("ActionBarAurasDB", defaults, true)
+    addon.db = LibStub("AceDB-3.0"):New("ActionBarAurasDB", addon.defaults, true)
 end

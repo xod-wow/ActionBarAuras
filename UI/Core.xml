@@ -113,22 +113,54 @@
                 <Anchor point="TOPLEFT" relativeKey="$parent.OverlayHeader" relativePoint="BOTTOMLEFT" x="8" y="-8" />
             </Anchors>
         </CheckButton>
-        <CheckButton parentKey="OverlayTexture" inherits="ABACheckButtonTemplate" text="Texture">
+        <EditBox autoFocus="false" inherits="InputBoxTemplate" parentKey="OverlayTexture">
+            <Size x="300" y="22"/>
             <Anchors>
-                <Anchor point="TOPLEFT" relativeKey="$parent.OverlayEnable" relativePoint="BOTTOMLEFT" y="-8" />
+                <Anchor point="TOPLEFT" relativeKey="$parent.OverlayEnable" relativePoint="BOTTOMLEFT" x="60" y="-8" />
             </Anchors>
-        </CheckButton>
-        <CheckButton parentKey="OverlayBuffColor" inherits="ABACheckButtonTemplate" text="Buff Color">
-            <Anchors>
-                <Anchor point="TOPLEFT" relativeKey="$parent.OverlayTexture" relativePoint="BOTTOMLEFT" y="-8" />
-            </Anchors>
-        </CheckButton>
-        <CheckButton parentKey="OverlayDeBuffColor" inherits="ABACheckButtonTemplate" text="Debuff Color">
-            <Anchors>
-                <Anchor point="TOPLEFT" relativeKey="$parent.OverlayBuffColor" relativePoint="BOTTOMLEFT" y="-8" />
-            </Anchors>
-        </CheckButton>
+            <FontString inherits="ChatFontNormal" justifyH="LEFT"/>
+            <Layers>
+                <Layer level="ARTWORK">
+                    <FontString inherits="GameFontHighlight" justifyH="RIGHT" text="Texture">
+                        <Anchors>
+                            <Anchor point="RIGHT" relativePoint="LEFT" x="-12" />
+                        </Anchors>
+                    </FontString>
+                </Layer>
+            </Layers>
+        </EditBox>
     </Frames>
+    <Layers>
+        <Layer level="BACKGROUND">
+            <Texture>
+                <Anchors>
+                    <Anchor point="TOPLEFT" relativeKey="$parent.StacksEnable" x="-4" y="4" />
+                    <Anchor point="BOTTOMRIGHT" relativeKey="$parent.StacksAnchor" x="4" y="-4" />
+                </Anchors>
+                <Color r="0" g="0" b="0" a="0.4" />
+            </Texture>
+        </Layer>
+        <Layer level="BACKGROUND">
+            <Texture>
+                <Anchors>
+                    <Anchor point="TOPLEFT" relativeKey="$parent.DurationEnable" x="-4" y="4" />
+                    <Anchor point="BOTTOMRIGHT" relativeKey="$parent.DurationAnchor" x="4" y="-4" />
+                </Anchors>
+                <Color r="0" g="0" b="0" a="0.4" />
+            </Texture>
+        </Layer>
+        <Layer level="BACKGROUND">
+            <Texture>
+                <Anchors>
+                    <Anchor point="TOPLEFT" relativeKey="$parent.OverlayEnable" x="-4" y="4" />
+                    <Anchor point="RIGHT" relativeKey="$parent.DurationAnchor" x="4" />
+                    <Anchor point="BOTTOM" relativeKey="$parent.OverlayTexture" y="-12" />
+                </Anchors>
+                <Color r="0" g="0" b="0" a="0.4" />
+            </Texture>
+        </Layer>
+    </Layers>
+
 </Frame>
 
 </Ui>

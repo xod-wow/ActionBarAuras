@@ -49,13 +49,6 @@
     <Scripts>
         <OnLoad method="OnLoad" />
     </Scripts>
-    <Layers>
-        <Layer level="BACKGROUND">
-            <Texture setAllPoints="true">
-                <Color r="0" g="0" b="0" a="0.2" />
-            </Texture>
-        </Layer>
-    </Layers>
     <Frames>
         <DropdownButton parentKey="FileDropdown" inherits="WoWStyle2DropdownTemplate">
             <Size x="256" y="32" />
@@ -101,13 +94,6 @@
     <Scripts>
         <OnLoad method="OnLoad" />
     </Scripts>
-    <Layers>
-        <Layer level="BACKGROUND">
-            <Texture setAllPoints="true">
-                <Color r="0" g="0" b="0" a="0.2" />
-            </Texture>
-        </Layer>
-    </Layers>
     <Frames>
         <DropdownButton parentKey="PointDropdown" inherits="WoWStyle2DropdownTemplate">
             <Size x="128" y="32" />

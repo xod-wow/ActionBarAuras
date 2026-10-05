@@ -62,6 +62,27 @@ function addon.CorePanelMixin:Setup()
 
     self.DurationFont:Setup(SetDurationFont, p.duration.fontFile, p.duration.fontSize, p.duration.fontFlags)
     self.DurationAnchor:Setup(SetDurationAnchor, p.duration.point, p.duration.x, p.duration.y)
+
+    self.OverlayEnable:SetChecked(p.overlay.enable)
+    self.OverlayEnable:SetScript('OnClick',
+        function (checkButton)
+            p.overlay.enable = checkButton:GetChecked()
+            self.DemoOverlay:Style()
+            addon.OnOptionsChanged()
+        end)
+
+    self.OverlayTexture:SetText(p.overlay.texture)
+    self.OverlayTexture:SetScript('OnEnterPressed',
+        function (editBox)
+            local tex = editBox:GetText()
+            if tex == "" then
+                tex = addon.defaults.profile.overlay.texture
+                editBox:SetText(tex)
+            end
+            p.overlay.texture = tex
+            self.DemoOverlay:Style()
+            addon.OnOptionsChanged()
+        end)
 end
 
 function addon.CorePanelMixin:OnLoad()
@@ -70,7 +91,7 @@ function addon.CorePanelMixin:OnLoad()
 
     self.DemoButton:SetTexture(135992)
     self.DemoOverlay.durationText:SetText("2.6")
-    self.DemoOverlay.stacksText:SetText("2")
+    self.DemoOverlay.stacksText:SetText("3")
 
     addon.category = Settings.RegisterCanvasLayoutCategory(self, addonTitle)
     Settings.RegisterAddOnCategory(addon.category)

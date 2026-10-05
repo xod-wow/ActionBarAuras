@@ -41,7 +41,11 @@ end
 function addon.OverlayAuraMixin:Style()
     local p = addon.db.profile
     if p.overlay.enable then
-        self.auraBorder:SetTexture(p.overlay.texture)
+        if tonumber(p.overlay.texture) or p.overlay.texture:find('\\', nil, true) then
+            self.auraBorder:SetTexture(p.overlay.texture)
+        else
+            self.auraBorder:SetAtlas(p.overlay.texture)
+        end
         local c = p.overlay.color[self.colorKey]
         self.auraBorder:SetVertexColor(c.r, c.g, c.b, c.a)
         self.auraBorder:Show()
