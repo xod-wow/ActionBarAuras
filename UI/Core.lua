@@ -71,6 +71,9 @@ function addon.CorePanelMixin:Setup()
             addon.OnOptionsChanged()
         end)
 
+    -- Possible textures?
+    -- Round: talents-node-choiceflyout-circle-sheenmask
+
     self.OverlayTexture:SetText(p.overlay.texture)
     self.OverlayTexture:SetScript('OnEnterPressed',
         function (editBox)

@@ -142,18 +142,32 @@ function AuraContainerManagerMixin:CreateAuraSlot()
             end
     }
     self.as = self.c:AddAuraSlot("ABA", "", options)
+end
+
+function AuraContainerManagerMixin:Initialize(fd)
+    self.fd = fd
+    self.c = CreateFrame('AuraContainer', nil, nil, 'CustomAuraContainerTemplate')
+    self.c:SetUnit(fd.unit)
+    self.c:SetEnabled(false)
+    self:CreateAuraSlot()
+end
+
+function AuraContainerManagerMixin:AssignToButton(button)
+    self.button = button
+    self.c:SetParent(button)
+    self.c:SetPoint("TOPLEFT")
     PixelUtil.SetSize(self.as, self.button:GetSize())
     self.as:SetPoint("CENTER", self.button)
     self.as:SetFrameLevel(self.button.cooldown:GetFrameLevel()+1)
 end
 
-function AuraContainerManagerMixin:Initialize(fd, button)
-    self.fd = fd
-    self.button = button
-    self.c = CreateFrame('AuraContainer', nil, button, 'CustomAuraContainerTemplate')
-    self.c:SetPoint("TOPLEFT")
-    self.c:SetUnit(fd.unit)
-    self:CreateAuraSlot()
+function AuraContainerManagerMixin:Reset()
+    self.button = nil
+    self.c:SetParent(nil)
+    self.c:ClearAllPoints()
+    self.c:SetEnabled(false)
+    self.c:SetAuraSlotCandidateFilters("ABA", {})
+    self.as:ClearAllPoints()
 end
 
 function AuraContainerManagerMixin:ApplyFilters(spellID)
@@ -195,7 +209,7 @@ end
 
 local function CreateAuraContainerManager(fd, button)
     local acm = CreateFromMixins(AuraContainerManagerMixin)
-    acm:Initialize(fd, button)
+    acm:Initialize(fd)
     return acm
 end
 
@@ -227,10 +241,23 @@ function addon.ButtonManagerMixin:GetActionSpellID()
 end
 
 function addon.ButtonManagerMixin:Initialize(button)
-    self.button = button
     self.acm = {}
     for _, fd in ipairs(FilterDefinitions) do
-        self.acm[fd.name] = CreateAuraContainerManager(fd, button)
+        self.acm[fd.name] = CreateAuraContainerManager(fd)
+    end
+end
+
+function addon.ButtonManagerMixin:AssignToButton(button)
+    self.button = button
+    for _, fd in ipairs(FilterDefinitions) do
+        self.acm[fd.name]:AssignToButton(button)
+    end
+end
+
+function addon.ButtonManagerMixin:Reset()
+    self.button = nil
+    for _, fd in ipairs(FilterDefinitions) do
+        self.acm[fd.name]:Reset()
     end
 end
 
