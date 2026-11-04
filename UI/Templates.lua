@@ -38,6 +38,8 @@ local function FontFileMenuGenerate(owner, rootDescription)
                 button.fontString:SetFontObject(fo)
             end)
     end
+    local _, y = GetPhysicalScreenSize()
+    rootDescription:SetScrollMode(math.floor(y/3))
 end
 
 local function FontFlagsMenuGenerate(owner, rootDescription)
