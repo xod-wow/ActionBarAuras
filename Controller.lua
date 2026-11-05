@@ -173,12 +173,5 @@ function addon.Controller:OnEvent(event, ...)
         self:ScheduleUpdate()
     elseif event == 'PLAYER_TARGET_CHANGED' then
         self:ScheduleUpdate()
-    elseif event == 'UNIT_FACTION' or event == 'UNIT_FLAGS' then
-        -- Maybe what's fired when you get MC and previously attackable target
-        -- becomes friendly?
-        local unitToken = ...
-        if unitToken == 'target' then
-            self:ScheduleUpdate()
-        end
     end
 end
