@@ -20,6 +20,7 @@ Data\RaidBuff.lua
 
 LinkedSpells.lua
 ButtonManager.lua
+Controller.lua
 Core.lua
 
 UI\UI.xml
