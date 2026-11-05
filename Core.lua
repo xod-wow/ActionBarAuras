@@ -9,7 +9,7 @@ local BadRestrictions = {
     Enum.AddOnRestrictionType.PvPMatch,
 }
 
-local function IsModifyAllowed()
+function addon.IsModifyAllowed()
     for _, r in ipairs(BadRestrictions) do
         if C_RestrictedActions.IsAddOnRestrictionActive(r) then
             return false
@@ -52,7 +52,7 @@ function addon.Core:OnEvent(event, ...)
         addon.Controller:UpdateOverlayFilters()
     elseif event == 'ADDON_RESTRICTION_STATE_CHANGED' then
         -- local type, state = ...
-        if needsStyle and IsModifyAllowed() then
+        if needsStyle and addon.IsModifyAllowed() then
             addon.Controller:StyleAllOverlays()
             needsStyle = false
         end
@@ -60,7 +60,7 @@ function addon.Core:OnEvent(event, ...)
 end
 
 function addon.Core:OnOptionsChanged()
-    if IsModifyAllowed() then
+    if addon.IsModifyAllowed() then
         addon.Controller:StyleAllOverlays()
     else
         needsStyle = true
