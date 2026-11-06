@@ -42,7 +42,7 @@
 </Slider>
 
 <Frame name="ABASelectFontTemplate" virtual="true">
-    <Size y="80" />
+    <Size x="480" y="44" />
     <Mixins>
         <Mixin key="SelectFontMixin" source="local" />
     </Mixins>
@@ -51,7 +51,7 @@
     </Scripts>
     <Frames>
         <DropdownButton parentKey="FileDropdown" inherits="WoWStyle2DropdownTemplate">
-            <Size x="256" y="32" />
+            <Size x="192" y="32" />
             <Anchors>
                 <Anchor point="TOPLEFT" y="-4" x="64" />
             </Anchors>
@@ -66,12 +66,12 @@
             </Anchors>
         </DropdownButton>
         <Slider parentKey="SizeSlider" inherits="ABASliderWithThumbTextTemplate" valueStep="1">
-            <Size x="392" y="32" />
+            <Size x="128" y="32" />
             <KeyValues>
                 <KeyValue key="valueTextTemplate" value="FONT_SIZE_TEMPLATE" type="global" />
             </KeyValues>
             <Anchors>
-                <Anchor point="TOPLEFT" relativeKey="$parent.FileDropdown" relativePoint="BOTTOMLEFT" y="-8" />
+                <Anchor point="LEFT" relativeKey="$parent.FlagsDropdown" relativePoint="RIGHT" x="8" />
             </Anchors>
         </Slider>
     </Frames>
@@ -87,7 +87,7 @@
 </Frame>
 
 <Frame name="ABASelectAnchorTemplate" virtual="true">
-    <Size y="44" />
+    <Size x="480" y="44" />
     <Mixins>
         <Mixin key="SelectAnchorMixin" source="local" />
     </Mixins>
@@ -140,5 +140,13 @@
         </Layer>
     </Layers>
 </Frame>
+
+<Button name="ABASelectColorTemplate" inherits="ColorSwatchTemplate" virtual="true">
+    <ButtonText inherits="GameFontWhite" parentKey="Text">
+        <Anchors>
+            <Anchor point="LEFT" relativePoint="RIGHT" x="4" />
+        </Anchors>
+    </ButtonText>
+</Button>
 
 </Ui>
