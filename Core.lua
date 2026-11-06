@@ -59,7 +59,7 @@ function addon.Core:OnEvent(event, ...)
     end
 end
 
-function addon.Core:OnOptionsChanged()
+function addon.OnOptionsChanged()
     if addon.IsModifyAllowed() then
         addon.Controller:StyleAllOverlays()
     else
