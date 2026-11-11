@@ -28,6 +28,7 @@ addon.defaults = {
         },
         duration = {
             enable = true,
+            shadow = true,
             fontFile = fontFile,
             fontSize = fontSize,
             fontFlags = fontFlags,
