@@ -27,6 +27,15 @@ local durationTextOptions = {
     }
 }
 
+local function StyleDurationShadow(fontString)
+    if addon.db.profile.duration.shadow then
+        fontString:SetShadowColor(0, 0, 0, 1)
+        fontString:SetShadowOffset(2, -2)
+    else
+        fontString:SetShadowColor(0, 0, 0, 0)
+        fontString:SetShadowOffset(0, 0)
+    end
+end
 
 --[[--------------------------------------------------------------------------]]--
 
@@ -40,6 +49,7 @@ end
 
 function addon.OverlayAuraMixin:Style()
     local p = addon.db.profile
+    StyleDurationShadow(self.durationText)
     if p.overlay.enable then
         if tonumber(p.overlay.texture) or p.overlay.texture:find('\\', nil, true) then
             self.auraBorder:SetTexture(p.overlay.texture)
@@ -83,6 +93,7 @@ end
 
 function addon.OverlayHighlightMixin:Style()
     local p = addon.db.profile
+    StyleDurationShadow(self.durationText)
     if p.duration.enable then
         self.durationText:SetFont(p.stacks.fontFile, p.stacks.fontSize, p.stacks.fontFlags)
         self.durationText:ClearAllPoints()

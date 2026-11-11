@@ -158,7 +158,16 @@ function AuraContainerManagerMixin:AssignToButton(button)
     self.c:SetPoint("TOPLEFT")
     PixelUtil.SetSize(self.as, self.button:GetSize())
     self.as:SetPoint("CENTER", self.button)
-    self.as:SetFrameLevel(self.button.cooldown:GetFrameLevel()+1)
+    -- Keep aura numbers in front of the macro name and keybind labels.
+    local level = math.max(button:GetFrameLevel(), button.cooldown:GetFrameLevel())
+    local nameParent = button.Name and button.Name:GetParent()
+    local hotkeyParent = button.HotKey and button.HotKey:GetParent()
+    if nameParent then level = math.max(level, nameParent:GetFrameLevel()) end
+    if hotkeyParent then level = math.max(level, hotkeyParent:GetFrameLevel()) end
+    self.as:SetFrameLevel(level + 2)
+    if self.auraFrame then
+        self.auraFrame:SetFrameLevel(level + 3)
+    end
 end
 
 function AuraContainerManagerMixin:Reset()

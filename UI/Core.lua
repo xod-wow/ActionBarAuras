@@ -87,6 +87,13 @@ function addon.CorePanelMixin:Setup()
     self.DurationFont:Setup(SetDurationFont, p.duration.fontFile, p.duration.fontSize, p.duration.fontFlags)
     self.DurationAnchor:Setup(SetDurationAnchor, p.duration.point, p.duration.x, p.duration.y)
 
+    self.DurationShadow:SetChecked(p.duration.shadow)
+    self.DurationShadow:SetScript("OnClick", function(checkButton)
+        p.duration.shadow = checkButton:GetChecked()
+        self:UpdateDemo()
+        addon.OnOptionsChanged()
+    end)
+
     self.OverlayEnable:SetChecked(p.overlay.enable)
     self.OverlayEnable:SetScript('OnClick',
         function (checkButton)
