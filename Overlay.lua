@@ -27,14 +27,29 @@ local durationTextOptions = {
     }
 }
 
-local function StyleDurationShadow(fontString)
-    if addon.db.profile.duration.shadow then
-        fontString:SetShadowColor(0, 0, 0, 1)
-        fontString:SetShadowOffset(2, -2)
-    else
-        fontString:SetShadowColor(0, 0, 0, 0)
-        fontString:SetShadowOffset(0, 0)
+-- Use font objects so shadow styling is inherited by the rendered text.
+local fontFile, fontSize = NumberFontNormal:GetFont()
+local shadowFont = CreateFont("ABAShadowFont")
+shadowFont:SetFont(fontFile, fontSize, "")
+shadowFont:SetShadowColor(0, 0, 0, 0.8)
+shadowFont:SetShadowOffset(1, -1)
+
+local plainFont = CreateFont("ABAPlainFont")
+plainFont:SetFont(fontFile, fontSize, "")
+plainFont:SetShadowColor(0, 0, 0, 0)
+plainFont:SetShadowOffset(0, 0)
+
+local function StyleFont(fontString, options)
+    local flags, shadow = {}, false
+    for flag in (options.fontFlags or ""):gmatch("[^,%s]+") do
+        if flag == "SHADOW" then
+            shadow = true
+        else
+            flags[#flags + 1] = flag
+        end
     end
+    fontString:SetFontObject(shadow and shadowFont or plainFont)
+    fontString:SetFont(options.fontFile, options.fontSize, table.concat(flags, ","))
 end
 
 --[[--------------------------------------------------------------------------]]--
@@ -49,7 +64,6 @@ end
 
 function addon.OverlayAuraMixin:Style()
     local p = addon.db.profile
-    StyleDurationShadow(self.durationText)
     if p.overlay.enable then
         if tonumber(p.overlay.texture) or p.overlay.texture:find('\\', nil, true) then
             self.auraBorder:SetTexture(p.overlay.texture)
@@ -63,7 +77,7 @@ function addon.OverlayAuraMixin:Style()
         self.auraBorder:Hide()
     end
     if p.duration.enable then
-        self.durationText:SetFont(p.duration.fontFile, p.duration.fontSize, p.duration.fontFlags)
+        StyleFont(self.durationText, p.duration)
         self.durationText:ClearAllPoints()
         self.durationText:SetPoint(p.duration.point, self, p.duration.point, p.duration.x, p.duration.y)
         self.durationText:Show()
@@ -71,7 +85,7 @@ function addon.OverlayAuraMixin:Style()
         self.durationText:Hide()
     end
     if p.stacks.enable then
-        self.stacksText:SetFont(p.stacks.fontFile, p.stacks.fontSize, p.stacks.fontFlags)
+        StyleFont(self.stacksText, p.stacks)
         self.stacksText:ClearAllPoints()
         self.stacksText:SetPoint(p.stacks.point, self, p.stacks.point, p.stacks.x, p.stacks.y)
         self.stacksText:Show()
@@ -93,11 +107,10 @@ end
 
 function addon.OverlayHighlightMixin:Style()
     local p = addon.db.profile
-    StyleDurationShadow(self.durationText)
     if p.duration.enable then
-        self.durationText:SetFont(p.stacks.fontFile, p.stacks.fontSize, p.stacks.fontFlags)
+        StyleFont(self.durationText, p.duration)
         self.durationText:ClearAllPoints()
-        self.durationText:SetPoint(p.stacks.point, self, p.stacks.point, p.stacks.x, p.stacks.y)
+        self.durationText:SetPoint(p.duration.point, self, p.duration.point, p.duration.x, p.duration.y)
         self.durationText:Show()
     else
         self.durationText:Hide()

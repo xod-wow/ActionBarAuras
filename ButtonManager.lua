@@ -128,6 +128,17 @@ local FilterDefinitions = {
 
 local AuraContainerManagerMixin = {}
 
+local function RaiseFrameAboveSiblings(frame)
+    local parent = frame:GetParent()
+    local level = parent:GetFrameLevel()
+    for _, child in ipairs({ parent:GetChildren() }) do
+        if child ~= frame then
+            level = math.max(level, child:GetFrameLevel())
+        end
+    end
+    frame:SetFrameLevel(level + 1)
+end
+
 function AuraContainerManagerMixin:CreateAuraSlot()
     local fd = self.fd
     local options = {
@@ -158,16 +169,7 @@ function AuraContainerManagerMixin:AssignToButton(button)
     self.c:SetPoint("TOPLEFT")
     PixelUtil.SetSize(self.as, self.button:GetSize())
     self.as:SetPoint("CENTER", self.button)
-    -- Keep aura numbers in front of the macro name and keybind labels.
-    local level = math.max(button:GetFrameLevel(), button.cooldown:GetFrameLevel())
-    local nameParent = button.Name and button.Name:GetParent()
-    local hotkeyParent = button.HotKey and button.HotKey:GetParent()
-    if nameParent then level = math.max(level, nameParent:GetFrameLevel()) end
-    if hotkeyParent then level = math.max(level, hotkeyParent:GetFrameLevel()) end
-    self.as:SetFrameLevel(level + 2)
-    if self.auraFrame then
-        self.auraFrame:SetFrameLevel(level + 3)
-    end
+    RaiseFrameAboveSiblings(self.as)
 end
 
 function AuraContainerManagerMixin:Reset()
