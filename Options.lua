@@ -52,4 +52,11 @@ addon.defaults = {
 
 function addon.InitializeOptions()
     addon.db = LibStub("AceDB-3.0"):New("ActionBarAurasDB", addon.defaults, true)
+    -- Migrate the standalone shadow checkbox from the earlier PR version.
+    local duration = addon.db.profile.duration
+    if duration.shadow then
+        local hasSlug = (duration.fontFlags or ""):find("SLUG", 1, true)
+        duration.fontFlags = hasSlug and "SHADOW,SLUG" or "SHADOW"
+    end
+    duration.shadow = nil
 end

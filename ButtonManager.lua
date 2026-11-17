@@ -128,6 +128,17 @@ local FilterDefinitions = {
 
 local AuraContainerManagerMixin = {}
 
+local function RaiseFrameAboveSiblings(frame)
+    local parent = frame:GetParent()
+    local level = parent:GetFrameLevel()
+    for _, child in ipairs({ parent:GetChildren() }) do
+        if child ~= frame then
+            level = math.max(level, child:GetFrameLevel())
+        end
+    end
+    frame:SetFrameLevel(level + 1)
+end
+
 function AuraContainerManagerMixin:CreateAuraSlot()
     local fd = self.fd
     local options = {
@@ -158,7 +169,7 @@ function AuraContainerManagerMixin:AssignToButton(button)
     self.c:SetPoint("TOPLEFT")
     PixelUtil.SetSize(self.as, self.button:GetSize())
     self.as:SetPoint("CENTER", self.button)
-    self.as:SetFrameLevel(self.button.cooldown:GetFrameLevel()+1)
+    RaiseFrameAboveSiblings(self.as)
 end
 
 function AuraContainerManagerMixin:Reset()

@@ -52,9 +52,11 @@ local function FontFlagsMenuGenerate(owner, rootDescription)
         self:Trigger()
     end
     rootDescription:CreateRadio("None", IsSelected, SetSelected, "")
-    rootDescription:CreateRadio("Slug", IsSelected, SetSelected, "SLUG")
     rootDescription:CreateRadio("Outline", IsSelected, SetSelected, "OUTLINE")
+    rootDescription:CreateRadio("Shadow", IsSelected, SetSelected, "SHADOW")
+    rootDescription:CreateRadio("Slug", IsSelected, SetSelected, "SLUG")
     rootDescription:CreateRadio("Outline+Slug", IsSelected, SetSelected, "OUTLINE,SLUG")
+    rootDescription:CreateRadio("Shadow+Slug", IsSelected, SetSelected, "SHADOW,SLUG")
 end
 
 function addon.SelectFontMixin:Trigger()
