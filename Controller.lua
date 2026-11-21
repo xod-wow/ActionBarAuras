@@ -14,15 +14,17 @@ local function EnumerateActionButtons()
     for _, actionBar in ipairs(ActionButtonUtil.ActionBarButtonNames) do
         for i = 1, NUM_ACTIONBAR_BUTTONS do
             local actionButton = _G[actionBar..i]
-            local actionID = actionButton.action
-            buttonsByAction[actionID] = actionButton
+            -- Index by the home slot even when logging in on another page.
+            local homeSlot = actionBar == 'ActionButton' and i or actionButton.action
+            buttonsByAction[actionButton:GetAttribute('action-base') or homeSlot] = actionButton
         end
     end
 
     -- Dominos
     if Dominos then
         for actionButton, actionID in Dominos.ActionButtons:GetAll() do
-            buttonsByAction[actionID] = actionButton
+            -- Two Dominos buttons can temporarily display the same action.
+            buttonsByAction[actionButton:GetAttribute('action-base') or actionID] = actionButton
         end
     end
 
@@ -83,15 +85,12 @@ end
 -- container per button with a slot for each category. Can then also
 -- prioritize them and not double up if we have both a buff and a debuff.
 
--- To support various action bar addons, this might need to hook the buttons
--- themselves for filter update on change, since plenty of them use all the SGH
--- stuff rather than the Blizzard bar paging. See BarIntegrations.lua in LBA.
-
 local UpdateFiltersEvents = {
     ['ACTIONBAR_PAGE_CHANGED'] = true,
     ['ACTIONBAR_SLOT_CHANGED'] = true,
     ['PLAYER_ENTERING_WORLD'] = true,
     ['UPDATE_BONUS_ACTIONBAR'] = true,
+    ['UPDATE_SHAPESHIFT_FORM'] = true,
     ['UPDATE_VEHICLE_ACTIONBAR'] = true,
 }
 
@@ -148,6 +147,8 @@ end
 
 function addon.Controller:Initialize()
     self:SetScript('OnEvent', self.OnEvent)
+    -- Also fires when Dominos pages a button without changing Blizzard's bar page.
+    EventRegistry:RegisterCallback('ActionButton.OnActionChanged', self.ScheduleUpdate, self)
     FrameUtil.RegisterFrameForEvents(self, GetKeysArray(UpdateFiltersEvents))
     FrameUtil.RegisterFrameForEvents(self, GetKeysArray(UpdateAllAurasEvents))
     self:AssignButtonManagers()
